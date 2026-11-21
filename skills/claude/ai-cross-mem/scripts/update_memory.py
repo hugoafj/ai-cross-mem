@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to update existing memories in brain-agm.
+Script to update existing memories in ai-cross-mem.
 
 Usage:
     python update_memory.py --project <name> --file <file> [options]
@@ -189,7 +189,7 @@ def update_memory(project, filename, new_title=None, new_status=None,
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Update an existing memory in brain-agm',
+        description='Update an existing memory in ai-cross-mem',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

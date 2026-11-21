@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-brain-agm automatic review hook.
+ai-cross-mem automatic memory review hook.
 
 Runs on PostToolUse and checks whether 15+ minutes have passed since the last review.
 If so, it suggests that the agent check whether there is something important to save.
@@ -22,7 +22,7 @@ def get_last_check_file():
     else:
         home = Path.home()
 
-    check_file = home / '.claude' / 'skills' / 'brain-agm' / '.last_check'
+    check_file = home / '.claude' / 'skills' / 'ai-cross-mem' / '.last_check'
     return check_file
 
 
@@ -113,7 +113,7 @@ def main():
             # Suggest that the agent review
             message = {
                 "systemMessage": """
-🧠 brain-agm: 15+ minutes have passed since the last memory review.
+🧠 ai-cross-mem: 15+ minutes have passed since the last memory review.
 
 Consider whether there is anything important to save:
 - Was a plan completed or closed?
@@ -133,7 +133,7 @@ If there is something important, save it to memory in the appropriate format.
 
     except Exception as e:
         # On error, do not block the flow
-        error_msg = {"systemMessage": f"brain-agm hook error: {e}"}
+        error_msg = {"systemMessage": f"ai-cross-mem hook error: {e}"}
         print(json.dumps(error_msg), file=sys.stdout)
         sys.exit(0)
 

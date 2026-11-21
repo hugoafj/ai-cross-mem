@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to save memories in brain-agm.
+Script to save memories in ai-cross-mem.
 
 Usage:
     python save_memory.py --project <name> --type <type> --title <title> --content <file>
@@ -132,7 +132,7 @@ tags: {tags_str}
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Save a memory in brain-agm',
+        description='Save a memory in ai-cross-mem',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example:

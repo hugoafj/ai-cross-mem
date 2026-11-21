@@ -1,12 +1,12 @@
 # ============================================================
-# brain-agm: Shared Memory System
+# ai-cross-mem: Shared Memory System
 # Installed: 2026-11-05
 # Version: 1.0.0
 # ============================================================
 
-# brain-agm System for Windsurf/Devin
+# ai-cross-mem System for Windsurf/Devin
 
-Shared memory system across sessions. Automatically saves plans, decisions and problems in `~/Documents/brain-agm/[project]/`.
+Shared memory system across sessions. Automatically saves plans, decisions and problems in `~/Documents/ai-cross-mem/[project]/`.
 
 ## When to Save
 
@@ -25,7 +25,7 @@ Shared memory system across sessions. Automatically saves plans, decisions and p
 
 **Save**:
 ```bash
-python ~/.codeium/windsurf/skills/brain-agm/scripts/save_memory.py \
+python ~/.codeium/windsurf/skills/ai-cross-mem/scripts/save_memory.py \
   --type [plan|decision|problem|user-request] \
   --title "title" \
   --content [temp-file]
@@ -33,13 +33,13 @@ python ~/.codeium/windsurf/skills/brain-agm/scripts/save_memory.py \
 
 **Search** (current project):
 ```bash
-python ~/.codeium/windsurf/skills/brain-agm/scripts/search_memory.py \
+python ~/.codeium/windsurf/skills/ai-cross-mem/scripts/search_memory.py \
   --query "text"
 ```
 
 **Search** (all projects - only when user requests it):
 ```bash
-python ~/.codeium/windsurf/skills/brain-agm/scripts/search_memory.py \
+python ~/.codeium/windsurf/skills/ai-cross-mem/scripts/search_memory.py \
   --all-projects \
   --query "text"
 ```
@@ -58,5 +58,5 @@ Every memory must have:
 - Don't save sensitive information (credentials, API keys)
 
 # ============================================================
-# End of brain-agm
+# End of ai-cross-mem
 # ============================================================

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to search brain-agm memories.
+Script to search ai-cross-mem memories.
 
 Usage:
     python search_memory.py --project <name> --query <text>
@@ -120,7 +120,7 @@ def search_all_projects(query, limit=5, memory_type=None):
     else:
         home = Path.home()
 
-    memory_base = home / 'Documents' / 'brain-agm'
+    memory_base = home / 'Documents' / 'ai-cross-mem'
 
     if not memory_base.exists():
         return []
@@ -143,7 +143,7 @@ def search_all_projects(query, limit=5, memory_type=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Search brain-agm memories',
+        description='Search ai-cross-mem memories',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

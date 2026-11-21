@@ -1,12 +1,12 @@
 {
-  "description": "brain-agm - Hook de revisión automática cada 15 minutos",
+  "description": "ai-cross-mem - Automatic memory review hook every 15 minutes",
   "hooks": {
     "PostToolUse": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${HOME}/.claude/skills/brain-agm/hooks/check_memory.py\"",
+            "command": "python \"${HOME}/.claude/skills/ai-cross-mem/hooks/check_memory.py\"",
             "timeout": 5
           }
         ]
