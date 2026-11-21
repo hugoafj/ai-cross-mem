@@ -27,9 +27,9 @@ Startup cost: zero, because the script is not loaded into context until it is us
 
 ## Project status
 
-- The project folder was renamed from `engram-agm` to `brain-agm`.
-- The current session works in `C:\ai_projects\brain-agm`, and its transcript is in `%USERPROFILE%\.claude\projects\C--ai-projects-brain-agm\`.
-- Pending: delete the empty folder `C:\ai_projects\engram-agm` and the previous session copy in `%USERPROFILE%\.claude\projects\C--ai-projects-engram-agm\`. The tool blocked the deletion, so it must be done manually.
+- The project is now named `ai-cross-mem`.
+- The current session works in `C:\ai_projects\ai-cross-mem`, and its transcript is in `%USERPROFILE%\.claude\projects\C--ai-projects-ai-cross-mem\`.
+- Any older folders or transcript copies using previous project names are historical artifacts and are outside this repository.
 
 
 ## Plan for building the global memory tool
@@ -45,20 +45,20 @@ The idea is to share memory from one session to another across different IDEs or
 
 Storage structure:
 
-- On every Windows or Mac computer, create a folder named brain-agm in Documents, where all memories will be stored. The location can vary, but it must be a path that always exists and where the brain-agm folder can always be created. Recommend the best location for each OS.
-- When a chat session with any brain-agm agent opens, it must create a folder inside brain-agm named after the project we are working on, taken from the name of the folder we are in.
+- On every Windows or Mac computer, create a folder named `ai-cross-mem` in Documents, where all memories will be stored. The location can vary, but it must be a path that always exists and where the `ai-cross-mem` folder can always be created. Recommend the best location for each OS.
+- When a chat session with any ai-cross-mem agent opens, it must create a folder inside `ai-cross-mem` named after the project we are working on, taken from the name of the folder we are in.
 - Inside a project, all memories must be saved with a title, the date, and in this format: a) Brief description, b) What and why.
 
 Retrieval:
 
-- In a chat session, the agent must detect when the user asks a question that implies prior work or an important past decision. If brain-agm may have related memory, the agent must search it, load related memories into the current conversation context, and show the user what it found, always referencing the memory it recovered.
+- In a chat session, the agent must detect when the user asks a question that implies prior work or an important past decision. If ai-cross-mem may have related memory, the agent must search it, load related memories into the current conversation context, and show the user what it found, always referencing the memory it recovered.
 - The user can explicitly ask to search memory for the current project or even for another project.
 
 Constraints:
 
 - The user is not very technical, so the tool must be as simple as possible, while working globally on the machine for any project or session.
 - It must work for Claude and for Devin/Windsurf. For Claude, a CLAUDE.md file can reference AGENTS.md, where this tool is defined: how it works, what it is for, and when to use it, so the agent knows it exists at session start. A skill or MCP may also be needed to read or save memories, and the same files will need to exist for Devin/Windsurf.
-- All project files live in `C:\AI_Projects\brain-agm`, because the project will be shared with colleagues who can install it if useful. It needs an installation and configuration script, and a second script to remove the tool. Keep it as simple as possible.
+- All project files live in `C:\AI_Projects\ai-cross-mem`, because the project will be shared with colleagues who can install it if useful. It needs an installation and configuration script, and a second script to remove the tool. Keep it as simple as possible.
 - AGENTS.md can be global in each IDE configuration folder, at the same level as CLAUDE.md. Claude must reference AGENTS.md.
 - Do not use IDE-specific mechanisms to save memories. It must be a simple mechanism that works in any IDE, and memories must be stored in the folder specified above. Ideas from existing features can be borrowed.
 - Check whether Claude global skills exist and investigate them.

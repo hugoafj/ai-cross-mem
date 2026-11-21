@@ -1,13 +1,13 @@
 ---
-name: brain-agm
+name: ai-cross-mem
 description: Shared memory system across sessions. Activates when 1) User asks about previous work in current project, 2) A plan is completed/closed, 3) An important decision is made, 4) User explicitly asks to save to memory, 5) Every 15 minutes (via hook) to review if there's something new. Searches and loads relevant memories from current project. Only searches other projects when user explicitly requests it.
 version: 1.0.0
 tools: Bash, PowerShell, Read, Write
 ---
 
-# brain-agm: Shared Memory System
+# ai-cross-mem: Shared Memory System
 
-System for retaining important information across Claude Code sessions. Memories are saved in `~/Documents/brain-agm/[project]/` and are accessible from any session and IDE.
+System for retaining important information across Claude Code sessions. Memories are saved in `~/Documents/ai-cross-mem/[project]/` and are accessible from any session and IDE.
 
 ## When to Activate
 
@@ -76,14 +76,14 @@ Every memory must have this structure:
 
 ```bash
 # Windows (PowerShell)
-python ~/.claude/skills/brain-agm/scripts/save_memory.py `
+python ~/.claude/skills/ai-cross-mem/scripts/save_memory.py `
   --project [name] `
   --type [plan|decision|problem|user-request] `
   --title "descriptive-title" `
   --content [temp-file-path]
 
 # Mac/Linux (Bash)
-python ~/.claude/skills/brain-agm/scripts/save_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/save_memory.py \
   --project [name] \
   --type [plan|decision|problem|user-request] \
   --title "descriptive-title" \
@@ -96,12 +96,12 @@ python ~/.claude/skills/brain-agm/scripts/save_memory.py \
 
 ```bash
 # Search in current project (DEFAULT)
-python ~/.claude/skills/brain-agm/scripts/search_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
   --project [name] \
   --query "text to search"
 
 # Search in all projects (ONLY when user requests it)
-python ~/.claude/skills/brain-agm/scripts/search_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
   --all-projects \
   --query "text to search"
 ```
@@ -130,7 +130,7 @@ python ~/.claude/skills/brain-agm/scripts/search_memory.py \
 
 3. **Execute save script**:
    ```bash
-   python ~/.claude/skills/brain-agm/scripts/save_memory.py \
+   python ~/.claude/skills/ai-cross-mem/scripts/save_memory.py \
      --type [appropriate-type] \
      --title "descriptive-title" \
      --content $tempFile \
@@ -140,7 +140,7 @@ python ~/.claude/skills/brain-agm/scripts/search_memory.py \
 4. **Confirm to user**:
    ```
    ✓ Saved to memory: [title]
-   Location: ~/Documents/brain-agm/[project]/[file].md
+   Location: ~/Documents/ai-cross-mem/[project]/[file].md
    Type: [type]
    ```
 
@@ -156,8 +156,8 @@ python ~/.claude/skills/brain-agm/scripts/search_memory.py \
 
 3. **Execute search**:
    ```bash
-   python ~/.claude/skills/brain-agm/scripts/search_memory.py \
-     --project brain-agm \
+   python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
+     --project ai-cross-mem \
      --query "oauth"
    ```
 
@@ -212,7 +212,7 @@ Implemented OAuth 2.0 flow:
 $tempFile = "$env:TEMP\memory-oauth.md"
 $content | Out-File -FilePath $tempFile -Encoding utf8
 
-python ~/.claude/skills/brain-agm/scripts/save_memory.py `
+python ~/.claude/skills/ai-cross-mem/scripts/save_memory.py `
   --type plan `
   --title "OAuth 2.0 Implementation" `
   --content $tempFile `
@@ -222,7 +222,7 @@ python ~/.claude/skills/brain-agm/scripts/save_memory.py `
 **Response to user**:
 ```
 ✓ Saved completed plan to memory: oauth-2-0-implementation
-Location: ~/Documents/brain-agm/api-backend/oauth-2-0-implementation_2026-11-05_14-30-00.md
+Location: ~/Documents/ai-cross-mem/api-backend/oauth-2-0-implementation_2026-11-05_14-30-00.md
 Type: plan
 ```
 
@@ -234,7 +234,7 @@ Type: plan
 
 **Action**:
 ```bash
-python ~/.claude/skills/brain-agm/scripts/search_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
   --project api-backend \
   --query "redis tokens"
 ```
@@ -275,7 +275,7 @@ The alternative was using the main database, but we preferred Redis because auto
 
 **Action**:
 ```bash
-python ~/.claude/skills/brain-agm/scripts/search_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
   --all-projects \
   --query "rate limiting"
 ```
@@ -315,16 +315,15 @@ Want me to read any in detail?
 
 ### Script fails with "module not found"
 - Verify Python is in PATH
-- Verify scripts are in `~/.claude/skills/brain-agm/scripts/`
+- Verify scripts are in `~/.claude/skills/ai-cross-mem/scripts/`
 
 ### Doesn't find memories
 - Verify correct project: `--project [name]`
-- Verify exists: `~/Documents/brain-agm/[project]/`
+- Verify exists: `~/Documents/ai-cross-mem/[project]/`
 - Try with `--all-projects` if searching in another project
 
 ### Memory doesn't save
 - Verify temp file exists
-- Verify write permissions in `~/Documents/brain-agm/`
+- Verify write permissions in `~/Documents/ai-cross-mem/`
 - Review content format (must have "## Brief description", "## What", "## Why" sections)
 
-ChaChau !!!

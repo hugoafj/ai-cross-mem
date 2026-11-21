@@ -1,4 +1,4 @@
-# brain-agm: Shared Memory System
+# ai-cross-mem: Shared Memory System
 
 Shared memory system across sessions for Claude Code and Devin/Windsurf. Automatically saves plans, decisions, and solved problems so you don't lose context when opening new sessions.
 
@@ -9,7 +9,7 @@ When working with AI across different sessions, the agent doesn't remember what 
 - Manually document everything important
 - Search through your commit/PR history
 
-**brain-agm** solves this by automatically saving important information in a shared location that all IDEs can read.
+**ai-cross-mem** solves this by automatically saving important information in a shared location that all IDEs can read.
 
 ## Features
 
@@ -17,7 +17,7 @@ When working with AI across different sessions, the agent doesn't remember what 
 - ✅ **Smart search** - Agent finds relevant memories when you ask
 - ✅ **Cross-IDE** - Works in Claude Code and Devin/Windsurf
 - ✅ **Simple** - Just Markdown files, no database
-- ✅ **Portable** - Share memories between machines by copying `~/Documents/brain-agm/`
+- ✅ **Portable** - Share memories between machines by copying `~/Documents/ai-cross-mem/`
 
 ## Installation
 
@@ -30,14 +30,14 @@ When working with AI across different sessions, the agent doesn't remember what 
 ### Windows
 
 ```powershell
-cd C:\AI_Projects\brain-agm
+cd C:\AI_Projects\ai-cross-mem
 .\install.ps1
 ```
 
 ### Mac/Linux
 
 ```bash
-cd ~/ai_projects/brain-agm
+cd ~/ai_projects/ai-cross-mem
 chmod +x install.sh
 ./install.sh
 ```
@@ -46,13 +46,13 @@ chmod +x install.sh
 
 The installation script:
 
-1. ✅ Creates `~/Documents/brain-agm/` for storing memories
-2. ✅ Copies skill to `~/.claude/skills/brain-agm/` (Claude)
-3. ✅ Copies skill to `~/.codeium/windsurf/skills/brain-agm/` (Devin)
+1. ✅ Creates `~/Documents/ai-cross-mem/` for storing memories
+2. ✅ Copies skill to `~/.claude/skills/ai-cross-mem/` (Claude)
+3. ✅ Copies skill to `~/.codeium/windsurf/skills/ai-cross-mem/` (Devin)
 4. ✅ Adds configuration to `~/.claude/AGENTS.md` and `~/.claude/CLAUDE.md`
 5. ✅ Adds configuration to `~/.codeium/windsurf/AGENTS.md`
 
-**Important**: Does NOT overwrite existing files, appends brain-agm content at the end.
+**Important**: Does NOT overwrite existing files; it appends ai-cross-mem content at the end.
 
 ## Usage
 
@@ -90,7 +90,7 @@ Client requires corporate SSO for security
 EOF
 
 # 2. Save
-python ~/.claude/skills/brain-agm/scripts/save_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/save_memory.py \
   --type decision \
   --title "OAuth Implementation" \
   --content /tmp/memory.md
@@ -100,18 +100,18 @@ python ~/.claude/skills/brain-agm/scripts/save_memory.py \
 
 ```bash
 # Search in current project
-python ~/.claude/skills/brain-agm/scripts/search_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
   --query "oauth"
 
 # Search in all projects
-python ~/.claude/skills/brain-agm/scripts/search_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
   --all-projects \
   --query "authentication"
 ```
 
 ## Memory Structure
 
-Memories are saved in: `~/Documents/brain-agm/[project]/`
+Memories are saved in: `~/Documents/ai-cross-mem/[project]/`
 
 Each memory is a Markdown file:
 
@@ -197,11 +197,11 @@ Test that installation worked:
 
 ```bash
 # 1. Verify scripts installed
-python ~/.claude/skills/brain-agm/scripts/save_memory.py --help
+python ~/.claude/skills/ai-cross-mem/scripts/save_memory.py --help
 
 # 2. Save test memory
 echo "## Brief description
-brain-agm test
+ai-cross-mem test
 
 ## What
 Installed shared memory system
@@ -209,19 +209,19 @@ Installed shared memory system
 ## Why
 To test it works" > /tmp/test.md
 
-python ~/.claude/skills/brain-agm/scripts/save_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/save_memory.py \
   --project test \
   --type user-request \
   --title "Test" \
   --content /tmp/test.md
 
 # 3. Search for memory
-python ~/.claude/skills/brain-agm/scripts/search_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
   --project test \
   --query "test"
 
 # 4. Verify saved file
-ls ~/Documents/brain-agm/test/
+ls ~/Documents/ai-cross-mem/test/
 ```
 
 ## Uninstallation
@@ -234,7 +234,7 @@ ls ~/Documents/brain-agm/test/
 ./uninstall.sh
 ```
 
-**Note**: By default does NOT delete saved memories in `~/Documents/brain-agm/`. The script asks if you want to delete them.
+**Note**: By default does NOT delete saved memories in `~/Documents/ai-cross-mem/`. The script asks if you want to delete them.
 
 ## Troubleshooting
 
@@ -254,7 +254,7 @@ python --version  # or python3 --version
 
 1. Verify skill is installed:
    ```bash
-   ls ~/.claude/skills/brain-agm/
+   ls ~/.claude/skills/ai-cross-mem/
    ```
 
 2. Verify CLAUDE.md references AGENTS.md:
@@ -267,13 +267,13 @@ python --version  # or python3 --version
 ### Doesn't find memories
 
 - Verify correct project: project name is current folder name
-- Verify exists: `ls ~/Documents/brain-agm/[project]/`
+- Verify exists: `ls ~/Documents/ai-cross-mem/[project]/`
 - Try with `--all-projects` if searching in another project
 
 ## Project Structure
 
 ```
-brain-agm/
+ai-cross-mem/
 ├── README.md                       # This file
 ├── install.ps1                     # Windows installer
 ├── install.sh                      # Mac/Linux installer (TODO)
@@ -281,7 +281,7 @@ brain-agm/
 ├── uninstall.sh                    # Mac/Linux uninstaller (TODO)
 │
 ├── skills/                         # Skills for each IDE
-│   ├── claude/brain-agm/
+│   ├── claude/ai-cross-mem/
 │   │   ├── SKILL.md                # Skill definition for Claude
 │   │   └── scripts/
 │   │       ├── __init__.py
@@ -289,13 +289,13 @@ brain-agm/
 │   │       ├── save_memory.py      # Save memories
 │   │       └── search_memory.py    # Search memories
 │   │
-│   └── windsurf/brain-agm/
+│   └── windsurf/ai-cross-mem/
 │       └── SKILL.md                # Skill for Devin
 │
 ├── config/                         # Global configuration
 │   ├── claude/
 │   │   ├── CLAUDE.md               # Claude global config
-│   │   └── AGENTS.md               # brain-agm rules
+│   │   └── AGENTS.md               # ai-cross-mem rules
 │   └── windsurf/
 │       └── AGENTS.md               # Devin rules
 │
@@ -320,27 +320,8 @@ brain-agm/
 - [ ] Uninstallation scripts
 - [ ] Automated tests
 
-## Contributing
-
-This project is designed to be shared with the team. If you have improvements:
-
-1. Test locally
-2. Document the change
-3. Share the updated code
-
-## License
-
-Internal use for Improving. Do not distribute outside the organization.
-
-## Support
-
-For issues or questions:
-- Review Troubleshooting section above
-- Contact Global IT Services team
-- Create issue in internal repo (if applicable)
-
 ---
 
 **Version**: 1.0.0  
 **Last updated**: 2026-11-05  
-**Author**: Armando Gómez (armando.gomez@improving.com)
+**Author**: Hugo Flores (https://github.com/hugoafj)

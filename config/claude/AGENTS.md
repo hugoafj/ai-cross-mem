@@ -1,10 +1,10 @@
 # ============================================================
-# brain-agm: Shared Memory System
+# ai-cross-mem: Shared Memory System
 # Installed: 2026-11-05
 # Version: 1.0.0
 # ============================================================
 
-# brain-agm System
+# ai-cross-mem System
 
 This system automatically saves memory across sessions so you don't lose context when opening new Claude Code sessions.
 
@@ -15,9 +15,9 @@ This system automatically saves memory across sessions so you don't lose context
 - **Problems** found and solved
 - **Anything** you explicitly ask to save
 
-Memories are saved in `~/Documents/brain-agm/[project]/` in Markdown format and are accessible from any session and IDE.
+Memories are saved in `~/Documents/ai-cross-mem/[project]/` in Markdown format and are accessible from any session and IDE.
 
-## When to Use brain-agm
+## When to Use ai-cross-mem
 
 ### Save Memory
 
@@ -78,7 +78,7 @@ Implemented OAuth 2.0 flow:
 **Save** (create temp file first with content):
 ```powershell
 # Windows
-python ~/.claude/skills/brain-agm/scripts/save_memory.py `
+python ~/.claude/skills/ai-cross-mem/scripts/save_memory.py `
   --project [name] `
   --type [plan|decision|problem|user-request] `
   --title "descriptive-title" `
@@ -86,7 +86,7 @@ python ~/.claude/skills/brain-agm/scripts/save_memory.py `
   --tags "tag1,tag2"  # Optional
 
 # Mac/Linux
-python ~/.claude/skills/brain-agm/scripts/save_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/save_memory.py \
   --project [name] \
   --type [plan|decision|problem|user-request] \
   --title "descriptive-title" \
@@ -96,14 +96,14 @@ python ~/.claude/skills/brain-agm/scripts/save_memory.py \
 
 **Search in current project**:
 ```bash
-python ~/.claude/skills/brain-agm/scripts/search_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
   --project [name] \
   --query "text to search"
 ```
 
 **Search in all projects** (only when user requests it):
 ```bash
-python ~/.claude/skills/brain-agm/scripts/search_memory.py \
+python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
   --all-projects \
   --query "text to search"
 ```
@@ -131,5 +131,5 @@ python ~/.claude/skills/brain-agm/scripts/search_memory.py \
 - **Don't save sensitive information** - no credentials, API keys, PII
 
 # ============================================================
-# End of brain-agm
+# End of ai-cross-mem
 # ============================================================

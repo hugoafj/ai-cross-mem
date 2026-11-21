@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Shared utilities for brain-agm.
+Shared utilities for ai-cross-mem.
 Functions to detect the project, validate memories and search text.
 """
 
@@ -47,7 +47,7 @@ def get_memory_dir(project=None):
     else:
         home = Path.home()
 
-    memory_base = home / 'Documents' / 'brain-agm'
+    memory_base = home / 'Documents' / 'ai-cross-mem'
     memory_dir = memory_base / project
 
     return memory_dir

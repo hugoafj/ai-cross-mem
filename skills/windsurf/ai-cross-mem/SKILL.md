@@ -1,11 +1,11 @@
 ---
-name: brain-agm
+name: ai-cross-mem
 description: Shared memory system across sessions for Windsurf/Devin. Activates when user asks about previous work in current project, completes a plan, makes an important decision, or explicitly asks to save to memory. Searches and loads relevant memories from current project. Only searches other projects when user explicitly requests it.
 ---
 
-# brain-agm: Shared Memory System
+# ai-cross-mem: Shared Memory System
 
-System for retaining important information across Devin/Windsurf sessions. Memories are saved in `~/Documents/brain-agm/[project]/` and are accessible from any session and IDE.
+System for retaining important information across Devin/Windsurf sessions. Memories are saved in `~/Documents/ai-cross-mem/[project]/` and are accessible from any session and IDE.
 
 ## When to Use
 
@@ -31,7 +31,7 @@ Searches when:
 ```bash
 # 1. Create temp file with content (without frontmatter)
 # 2. Execute script
-python ~/.codeium/windsurf/skills/brain-agm/scripts/save_memory.py \
+python ~/.codeium/windsurf/skills/ai-cross-mem/scripts/save_memory.py \
   --project [name] \
   --type [plan|decision|problem|user-request] \
   --title "descriptive-title" \
@@ -42,12 +42,12 @@ python ~/.codeium/windsurf/skills/brain-agm/scripts/save_memory.py \
 
 ```bash
 # Current project (default)
-python ~/.codeium/windsurf/skills/brain-agm/scripts/search_memory.py \
+python ~/.codeium/windsurf/skills/ai-cross-mem/scripts/search_memory.py \
   --project [name] \
   --query "text"
 
 # All projects (only when user requests it)
-python ~/.codeium/windsurf/skills/brain-agm/scripts/search_memory.py \
+python ~/.codeium/windsurf/skills/ai-cross-mem/scripts/search_memory.py \
   --all-projects \
   --query "text"
 ```
@@ -73,4 +73,3 @@ python ~/.codeium/windsurf/skills/brain-agm/scripts/search_memory.py \
 - Always show user what was found/saved
 - Don't save sensitive information
 
-ChaChau !!!

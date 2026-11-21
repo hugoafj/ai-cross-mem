@@ -1,5 +1,5 @@
 """
-brain-agm scripts package
+ai-cross-mem scripts package
 Scripts to save, search and update shared memories.
 """
 

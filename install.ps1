@@ -1,13 +1,13 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    brain-agm installer for Windows/Mac/Linux
+    ai-cross-mem installer for Windows/Mac/Linux
 
 .DESCRIPTION
-    Installs the brain-agm shared memory system:
-    - Creates the memory directory in ~/Documents/brain-agm/
-    - Copies the skill to Claude (~/.claude/skills/brain-agm/)
-    - Copies the skill to Windsurf (~/.codeium/windsurf/skills/brain-agm/)
+    Installs the ai-cross-mem shared memory system:
+    - Creates the memory directory in ~/Documents/ai-cross-mem/
+    - Copies the skill to Claude (~/.claude/skills/ai-cross-mem/)
+    - Copies the skill to Windsurf (~/.codeium/windsurf/skills/ai-cross-mem/)
     - Adds configuration to AGENTS.md and CLAUDE.md (without overwriting)
     - Registers the automatic review hook in ~/.claude/settings.json
 
@@ -32,7 +32,7 @@ function Write-ErrorMsg { param($msg) Write-Host "✗ $msg" -ForegroundColor Red
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  brain-agm: Shared Memory System" -ForegroundColor Cyan
+Write-Host "  ai-cross-mem: Shared Memory System" -ForegroundColor Cyan
 Write-Host "  Installer v1.0.0" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
@@ -73,11 +73,11 @@ Write-Success "System: $os"
 Write-Success "Home: $homeDir"
 
 # Important paths
-$memoryBase = Join-Path $homeDir "Documents" "brain-agm"
-$claudeSkills = Join-Path $homeDir ".claude" "skills" "brain-agm"
+$memoryBase = Join-Path $homeDir "Documents" "ai-cross-mem"
+$claudeSkills = Join-Path $homeDir ".claude" "skills" "ai-cross-mem"
 $claudeAgents = Join-Path $homeDir ".claude" "AGENTS.md"
 $claudeMd = Join-Path $homeDir ".claude" "CLAUDE.md"
-$windsurfSkills = Join-Path $homeDir ".codeium" "windsurf" "skills" "brain-agm"
+$windsurfSkills = Join-Path $homeDir ".codeium" "windsurf" "skills" "ai-cross-mem"
 $windsurfAgents = Join-Path $homeDir ".codeium" "windsurf" "AGENTS.md"
 
 $projectRoot = $PSScriptRoot
@@ -93,7 +93,7 @@ if (Test-Path $memoryBase) {
 
 # 4. Copy the skill to Claude
 Write-Info "Installing skill for Claude Code..."
-$sourceSkill = Join-Path $projectRoot "skills" "claude" "brain-agm"
+$sourceSkill = Join-Path $projectRoot "skills" "claude" "ai-cross-mem"
 if (Test-Path $sourceSkill) {
     # Create the parent directory if it does not exist
     $claudeSkillsParent = Split-Path $claudeSkills -Parent
@@ -126,7 +126,7 @@ Write-Info "Checking Windsurf/Devin..."
 $windsurfBase = Join-Path $homeDir ".codeium" "windsurf"
 if (Test-Path $windsurfBase) {
     Write-Info "Windsurf found, installing skill..."
-    $sourceWindsurf = Join-Path $projectRoot "skills" "windsurf" "brain-agm"
+    $sourceWindsurf = Join-Path $projectRoot "skills" "windsurf" "ai-cross-mem"
 
     if (Test-Path $sourceWindsurf) {
         $windsurfSkillsParent = Split-Path $windsurfSkills -Parent
@@ -147,10 +147,10 @@ Write-Info "Configuring global AGENTS.md for Claude..."
 $agentsContent = Get-Content (Join-Path $projectRoot "config" "claude" "AGENTS.md") -Raw
 
 if (Test-Path $claudeAgents) {
-    # File exists, check whether it already has brain-agm
+    # File exists, check whether it already has ai-cross-mem
     $existing = Get-Content $claudeAgents -Raw
-    if ($existing -match "brain-agm: (Sistema de memoria compartida|Shared Memory System)") {
-        Write-Warning "AGENTS.md already contains brain-agm, skipping..."
+    if ($existing -match "ai-cross-mem: Shared Memory System") {
+        Write-Warning "AGENTS.md already contains ai-cross-mem, skipping..."
     } else {
         # Append to the end, with a backup
         $backup = "$claudeAgents.backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
@@ -158,7 +158,7 @@ if (Test-Path $claudeAgents) {
         Write-Success "Backup created: $backup"
 
         Add-Content -Path $claudeAgents -Value "`n`n$agentsContent"
-        Write-Success "brain-agm added to existing AGENTS.md"
+        Write-Success "ai-cross-mem added to existing AGENTS.md"
     }
 } else {
     # Create new
@@ -178,8 +178,8 @@ if (Test-Path $claudeMd) {
     # File exists, check whether it already references AGENTS.md
     $existing = Get-Content $claudeMd -Raw
 
-    if ($existing -match "brain-agm") {
-        Write-Warning "CLAUDE.md already contains brain-agm, skipping..."
+    if ($existing -match "ai-cross-mem") {
+        Write-Warning "CLAUDE.md already contains ai-cross-mem, skipping..."
     } elseif ($existing -match "@.*AGENTS\.md") {
         Write-Success "CLAUDE.md already references AGENTS.md"
     } else {
@@ -190,7 +190,7 @@ if (Test-Path $claudeMd) {
 
         # Append to the end
         Add-Content -Path $claudeMd -Value "`n`n$claudeMdContent"
-        Write-Success "brain-agm added to existing CLAUDE.md"
+        Write-Success "ai-cross-mem added to existing CLAUDE.md"
     }
 } else {
     # Create new
@@ -208,13 +208,13 @@ if (Test-Path $windsurfBase) {
 
         if (Test-Path $windsurfAgents) {
             $existing = Get-Content $windsurfAgents -Raw
-            if ($existing -match "brain-agm") {
-                Write-Warning "Windsurf AGENTS.md already contains brain-agm"
+            if ($existing -match "ai-cross-mem") {
+                Write-Warning "Windsurf AGENTS.md already contains ai-cross-mem"
             } else {
                 $backup = "$windsurfAgents.backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
                 Copy-Item $windsurfAgents $backup
                 Add-Content -Path $windsurfAgents -Value "`n`n$windsurfAgentsContent"
-                Write-Success "brain-agm added to Windsurf AGENTS.md"
+                Write-Success "ai-cross-mem added to Windsurf AGENTS.md"
             }
         } else {
             Set-Content -Path $windsurfAgents -Value $windsurfAgentsContent
@@ -229,7 +229,7 @@ if (Test-Path $windsurfBase) {
 Write-Info "Installing automatic review hook..."
 $hookScript = Join-Path $projectRoot "hooks" "scripts" "check_memory.py"
 if (Test-Path $hookScript) {
-    $claudeHooksDir = Join-Path $homeDir ".claude" "skills" "brain-agm" "hooks"
+    $claudeHooksDir = Join-Path $homeDir ".claude" "skills" "ai-cross-mem" "hooks"
     if (-not (Test-Path $claudeHooksDir)) {
         New-Item -ItemType Directory -Force -Path $claudeHooksDir | Out-Null
     }
@@ -287,7 +287,7 @@ if (Test-Path $windsurfBase) {
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Open a new Claude Code session" -ForegroundColor White
-Write-Host "  2. Try: 'remember this: I installed brain-agm'" -ForegroundColor White
+Write-Host "  2. Try: 'remember this: I installed ai-cross-mem'" -ForegroundColor White
 Write-Host "  3. In another session: 'what did we install recently?'" -ForegroundColor White
 Write-Host ""
 Write-Host "See README.md for more information and troubleshooting" -ForegroundColor Cyan
