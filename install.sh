@@ -6,6 +6,11 @@ fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 
 [[ "$(uname -s)" == "Darwin" ]] || fail "This installer supports macOS only. On Windows, run install.ps1."
 command -v python3 >/dev/null 2>&1 || fail "Python 3 is required. Install it from https://www.python.org/downloads/"
+integration="${1:-both}"
+case "$integration" in
+    claude|windsurf|both) ;;
+    *) fail "Usage: $0 [claude|windsurf|both]" ;;
+esac
 
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 home_dir="${HOME:?HOME is not set}"
@@ -15,12 +20,20 @@ claude_skill="$claude_dir/skills/ai-cross-mem"
 windsurf_dir="$home_dir/.codeium/windsurf"
 windsurf_skill="$windsurf_dir/skills/ai-cross-mem"
 
-[[ -d "$project_root/skills/claude/ai-cross-mem" ]] || fail "Claude skill files are missing from $project_root."
+if [[ "$integration" == "claude" || "$integration" == "both" ]]; then
+    [[ -d "$project_root/skills/claude/ai-cross-mem" ]] || fail "Claude skill files are missing from $project_root."
+fi
+if [[ "$integration" == "windsurf" || "$integration" == "both" ]]; then
+    [[ -d "$project_root/skills/windsurf/ai-cross-mem" ]] || fail "Windsurf skill files are missing from $project_root."
+fi
 python3 "$project_root/install_state.py" begin || fail "Could not record pre-install state."
 
 say "Installing ai-cross-mem for macOS..."
-mkdir -p "$memory_dir" "$claude_dir/skills" "$claude_skill"
-cp -R "$project_root/skills/claude/ai-cross-mem/." "$claude_skill/"
+mkdir -p "$memory_dir"
+if [[ "$integration" == "claude" || "$integration" == "both" ]]; then
+    mkdir -p "$claude_dir/skills" "$claude_skill"
+    cp -R "$project_root/skills/claude/ai-cross-mem/." "$claude_skill/"
+fi
 
 append_config() {
     local source="$1" destination="$2" marker="$3"
@@ -45,18 +58,25 @@ append_config() {
     say "Configured: $destination"
 }
 
-append_config "$project_root/config/claude/AGENTS.md" "$claude_dir/AGENTS.md" "ai-cross-mem: Shared Memory System"
-append_config "$project_root/config/claude/CLAUDE.md" "$claude_dir/CLAUDE.md" "ai-cross-mem: Shared Memory System"
+if [[ "$integration" == "claude" || "$integration" == "both" ]]; then
+    append_config "$project_root/config/claude/AGENTS.md" "$claude_dir/AGENTS.md" "ai-cross-mem: Shared Memory System"
+    append_config "$project_root/config/claude/CLAUDE.md" "$claude_dir/CLAUDE.md" "ai-cross-mem: Shared Memory System"
+fi
 
-if [[ -d "$windsurf_dir" ]]; then
+if [[ "$integration" == "windsurf" || "$integration" == "both" ]]; then
+    mkdir -p "$windsurf_dir"
     [[ -d "$project_root/skills/windsurf/ai-cross-mem" ]] || fail "Windsurf skill files are missing."
     mkdir -p "$windsurf_skill"
     cp -R "$project_root/skills/windsurf/ai-cross-mem/." "$windsurf_skill/"
     append_config "$project_root/config/windsurf/AGENTS.md" "$windsurf_dir/AGENTS.md" "ai-cross-mem: Shared Memory System"
+    mkdir -p "$windsurf_dir/ai-cross-mem"
+    cp "$project_root/hooks/windsurf/check_memory.py" "$windsurf_dir/ai-cross-mem/"
+    python3 "$project_root/hooks/windsurf/configure.py" || fail "Could not configure Windsurf hook."
 else
     say "Windsurf not detected; skipping its installation."
 fi
 
+if [[ "$integration" == "claude" || "$integration" == "both" ]]; then
 hook_source="$project_root/hooks/scripts/check_memory.py"
 [[ -f "$hook_source" ]] || fail "Hook script is missing: $hook_source"
 hook_dir="$claude_skill/hooks"
@@ -109,8 +129,9 @@ except Exception:
         pass
     raise
 PY
+fi
 
 say "Installed memories directory: $memory_dir"
-say "Installed Claude skill: $claude_skill"
+say "Selected integration(s): $integration"
 python3 "$project_root/install_state.py" capture || fail "Installed, but could not save the ownership manifest."
 say "Installation complete. Start a new Claude Code session to use ai-cross-mem."

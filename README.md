@@ -24,15 +24,19 @@ When working with AI across different sessions, the agent doesn't remember what 
 ### Requirements
 
 - Python 3.7+ installed
-- Claude Code or Devin/Windsurf installed
+- Claude Code, Windsurf, or both (choose at install time)
 - Windows PowerShell 5.1+ (Windows) or Bash 3.2+ (macOS)
 
 ### Windows
 
 ```powershell
 cd C:\AI_Projects\ai-cross-mem
-.\install.ps1
+.\install.ps1 -Integration Both
 ```
+
+Use `-Integration Claude` or `-Integration Windsurf` to install only one.
+The default is `Both`. On macOS, use `bash install.sh claude`,
+`bash install.sh windsurf`, or `bash install.sh both` (default: `both`).
 
 ### macOS
 
@@ -41,11 +45,11 @@ cd ~/ai_projects/ai-cross-mem
 bash install.sh
 ```
 
-The macOS installer requires Python 3. It creates the memory directory, installs the Claude skill and review hook, and configures Windsurf if it is present. Existing configuration files are backed up before ai-cross-mem instructions are appended. Memories are not overwritten.
+The macOS installer requires Python 3. It installs only the selected integration(s); Claude and Windsurf use separate scripts, instructions, and hook state. Their memory files intentionally share `~/Documents/ai-cross-mem`. Existing configuration files are backed up before ai-cross-mem instructions are appended.
 
 ## Updating
 
-The updater downloads the latest published release from `hugoafj/ai-cross-mem`, then runs the platform installer:
+The updater downloads the latest published release from `hugoafj/ai-cross-mem`, then reruns the installer for integrations recorded in the local install manifest:
 
 ```powershell
 # Windows
