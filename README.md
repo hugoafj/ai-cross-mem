@@ -47,7 +47,7 @@ bash install.sh
 
 The macOS installer requires Python 3. It installs only the selected integration(s); Claude and Windsurf use separate scripts, instructions, and hook state. Their memory files intentionally share `~/Documents/ai-cross-mem`. Existing configuration files are backed up before ai-cross-mem instructions are appended.
 
-**PR validation note:** macOS installation and hook behavior still need testing on a Mac. Local validation was performed on Windows; the macOS integration test was skipped.
+**PR validation note:** On Windows, 14 tests passed and the macOS integration test was skipped. The Windsurf-only install and hook script passed local checks, but the Cascade UI has not yet been verified with a real `post_write_code` event. Before sending the PR, test both the installation and visible reminder on macOS and verify the reminder in Windsurf/Cascade on Windows.
 
 ## Updating
 
