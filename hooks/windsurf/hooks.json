@@ -1,8 +1,9 @@
 {
   "hooks": {
-    "post_cascade_response": [
+    "post_write_code": [
       {
         "command": "python3 ~/.codeium/windsurf/ai-cross-mem/check_memory.py",
+        "powershell": "python \"$HOME/.codeium/windsurf/ai-cross-mem/check_memory.py\"",
         "show_output": true
       }
     ]

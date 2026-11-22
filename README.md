@@ -1,6 +1,6 @@
 # ai-cross-mem: Shared Memory System
 
-Shared memory system across sessions for Claude Code and Devin/Windsurf. Automatically saves plans, decisions, and solved problems so you don't lose context when opening new sessions.
+Shared memory system across sessions for Claude Code and Windsurf. Its skills guide the agent to save plans, decisions, and solved problems so you can recover context in later sessions.
 
 ## Problem It Solves
 
@@ -13,7 +13,7 @@ When working with AI across different sessions, the agent doesn't remember what 
 
 ## Features
 
-- ✅ **Automatic memory** - Saves plans, decisions, and problems without asking
+- ✅ **Agent-guided memory** - Skills instruct the agent when and how to save plans, decisions, and problems
 - ✅ **Smart search** - Agent finds relevant memories when you ask
 - ✅ **Cross-IDE** - Works in Claude Code and Devin/Windsurf
 - ✅ **Simple** - Just Markdown files, no database
@@ -75,13 +75,13 @@ The updater requires a published GitHub release. If no release has been publishe
 
 ## What It Installs
 
-The installation script:
+The installation script creates the shared memory directory and then installs
+only the selected integration(s):
 
-1. ✅ Creates `~/Documents/ai-cross-mem/` for storing memories
-2. ✅ Copies skill to `~/.claude/skills/ai-cross-mem/` (Claude)
-3. ✅ Copies skill to `~/.codeium/windsurf/skills/ai-cross-mem/` (Devin)
-4. ✅ Adds configuration to `~/.claude/AGENTS.md` and `~/.claude/CLAUDE.md`
-5. ✅ Adds configuration to `~/.codeium/windsurf/AGENTS.md`
+1. Creates `~/Documents/ai-cross-mem/` for shared memories.
+2. Claude installs its skill, Claude configuration, and Claude hook under Claude's own paths.
+3. Windsurf installs its skill, Windsurf configuration, and Cascade hook under Windsurf's own paths.
+4. Choosing one integration does not install or configure the other.
 
 **Important**: The installers preserve existing configuration by appending ai-cross-mem instructions rather than replacing the configuration. Existing configuration is backed up before it is changed. The installers do not delete or overwrite saved memories.
 
@@ -91,13 +91,13 @@ The installation script:
 
 The system works automatically:
 
-**Saves memory when**:
+**The agent is instructed to save memory when**:
 - You complete a plan
 - You make an important technical decision
 - You solve a complex problem
 - You say: "save this to memory"
 
-**Searches memory when**:
+**The agent is instructed to search memory when**:
 - You ask: "what did we do with X", "why did we decide Y"
 - You reference something from previous sessions
 
@@ -344,10 +344,12 @@ ai-cross-mem/
 │   │       ├── __init__.py
 │   │       ├── utils.py            # Shared functions
 │   │       ├── save_memory.py      # Save memories
-│   │       └── search_memory.py    # Search memories
+│   │       ├── search_memory.py    # Search memories
+│   │       └── update_memory.py    # Update memories
 │   │
 │   └── windsurf/ai-cross-mem/
-│       └── SKILL.md                # Skill for Devin
+│       ├── SKILL.md                # Skill for Windsurf
+│       └── scripts/                # Standalone Windsurf scripts
 │
 ├── config/                         # Global configuration
 │   ├── claude/
@@ -356,9 +358,11 @@ ai-cross-mem/
 │   └── windsurf/
 │       └── AGENTS.md               # Devin rules
 │
-├── hooks/                          # Hooks
-│   ├── claude/hooks.json
-│   └── scripts/check_memory.py
+├── hooks/                          # Integration-specific hooks
+│   ├── claude/
+│   │   └── hooks.json
+│   ├── scripts/check_memory.py      # Claude hook script
+│   └── windsurf/                    # Cascade hook and configuration
 │
 └── templates/
     └── memory_template.md          # Template
@@ -370,9 +374,9 @@ ai-cross-mem/
 - [x] Claude skill
 - [x] Claude global configuration
 - [x] Windows installation script
-- [ ] update_memory.py script
-- [ ] Devin/Windsurf skill
-- [ ] 15-minute review hook
+- [x] update_memory.py script
+- [x] Windsurf skill
+- [x] 15-minute review hook (Claude hook; Windsurf hook displays a user-facing reminder)
 - [x] macOS installer
 - [x] Windows and macOS uninstallation scripts
 - [x] Automated installer/updater/uninstaller tests

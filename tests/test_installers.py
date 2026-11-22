@@ -4,6 +4,7 @@ from pathlib import Path
 import platform
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -25,7 +26,10 @@ class InstallerTests(unittest.TestCase):
         instructions = (package / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn(".codeium/windsurf/skills/ai-cross-mem/scripts", instructions)
         hook = json.loads((ROOT / "hooks" / "windsurf" / "hooks.json").read_text())
-        self.assertIn("post_cascade_response", hook["hooks"])
+        self.assertIn("post_write_code", hook["hooks"])
+        configured_hook = hook["hooks"]["post_write_code"][0]
+        self.assertTrue(configured_hook["show_output"])
+        self.assertIn("powershell", configured_hook)
         hook_script = (ROOT / "hooks" / "windsurf" / "check_memory.py").read_text()
         self.assertIn(".codeium", hook_script)
         self.assertNotIn(".claude", hook_script)
@@ -43,7 +47,7 @@ class InstallerTests(unittest.TestCase):
             config_dir.mkdir(parents=True)
             config = config_dir / "hooks.json"
             config.write_text(
-                json.dumps({"hooks": {"post_cascade_response": [
+                json.dumps({"hooks": {"post_write_code": [
                     {"command": "python user_hook.py"}
                 ]}}),
                 encoding="utf-8",
@@ -60,10 +64,31 @@ class InstallerTests(unittest.TestCase):
             result = json.loads(config.read_text(encoding="utf-8"))
             commands = [
                 entry["command"]
-                for entry in result["hooks"]["post_cascade_response"]
+                for entry in result["hooks"]["post_write_code"]
             ]
             self.assertIn("python user_hook.py", commands)
             self.assertTrue(any("ai-cross-mem" in command for command in commands))
+
+    def test_windsurf_reminder_hook_emits_once_per_interval(self):
+        with tempfile.TemporaryDirectory() as home:
+            env = os.environ.copy()
+            env["USERPROFILE"] = home
+            env["HOME"] = home
+            hook = str(ROOT / "hooks" / "windsurf" / "check_memory.py")
+            payload = json.dumps({
+                "agent_action_name": "post_write_code",
+                "tool_info": {"file_path": "README.md"},
+            })
+            first = subprocess.run(
+                [sys.executable, hook], input=payload, text=True, capture_output=True,
+                env=env, check=True,
+            )
+            second = subprocess.run(
+                [sys.executable, hook], input=payload, text=True, capture_output=True,
+                env=env, check=True,
+            )
+            self.assertIn("ai-cross-mem", first.stdout)
+            self.assertEqual(second.stdout, "")
 
     def test_macos_installer_has_valid_bash_syntax(self):
         msys_bash = Path(r"C:\msys64\usr\bin\bash.exe")

@@ -6,10 +6,8 @@
 .DESCRIPTION
     Installs the ai-cross-mem shared memory system:
     - Creates the memory directory in ~/Documents/ai-cross-mem/
-    - Copies the skill to Claude (~/.claude/skills/ai-cross-mem/)
-    - Copies the skill to Windsurf (~/.codeium/windsurf/skills/ai-cross-mem/)
-    - Adds configuration to AGENTS.md and CLAUDE.md (without overwriting)
-    - Registers the automatic review hook in ~/.claude/settings.json
+    - Installs only the selected integration: Claude, Windsurf, or Both
+    - Preserves existing configuration and registers the selected hook
 
 .PARAMETER Verbose
     Shows detailed information during installation
@@ -327,7 +325,13 @@ if ($Integration -in @("Windsurf", "Both")) {
 
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "  1. Open a new Claude Code session" -ForegroundColor White
+if ($Integration -eq "Windsurf") {
+    Write-Host "  1. Restart Windsurf to load the skill and Cascade hook" -ForegroundColor White
+} elseif ($Integration -eq "Both") {
+    Write-Host "  1. Open a new Claude Code session and restart Windsurf" -ForegroundColor White
+} else {
+    Write-Host "  1. Open a new Claude Code session" -ForegroundColor White
+}
 Write-Host "  2. Try: 'remember this: I installed ai-cross-mem'" -ForegroundColor White
 Write-Host "  3. In another session: 'what did we install recently?'" -ForegroundColor White
 Write-Host ""
