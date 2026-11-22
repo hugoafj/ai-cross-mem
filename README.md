@@ -25,7 +25,7 @@ When working with AI across different sessions, the agent doesn't remember what 
 
 - Python 3.7+ installed
 - Claude Code or Devin/Windsurf installed
-- PowerShell 5.1+ (Windows) or Bash 4+ (Mac/Linux)
+- Windows PowerShell 5.1+ (Windows) or Bash 3.2+ (macOS)
 
 ### Windows
 
@@ -34,13 +34,38 @@ cd C:\AI_Projects\ai-cross-mem
 .\install.ps1
 ```
 
-### Mac/Linux
+### macOS
 
 ```bash
 cd ~/ai_projects/ai-cross-mem
-chmod +x install.sh
-./install.sh
+bash install.sh
 ```
+
+The macOS installer requires Python 3. It creates the memory directory, installs the Claude skill and review hook, and configures Windsurf if it is present. Existing configuration files are backed up before ai-cross-mem instructions are appended. Memories are not overwritten.
+
+## Updating
+
+The updater downloads the latest published release from `hugoafj/ai-cross-mem`, then runs the platform installer:
+
+```powershell
+# Windows
+python update.py
+```
+
+```bash
+# macOS
+python3 update.py
+```
+
+If a release declares deprecated files in `legacy-files.json`, the updater lists them and asks for confirmation before installation. It removes only those individual files from the supported skill directories, and only after the new installer succeeds; it never targets memories or global configuration. Use `--yes` to skip that confirmation in automation.
+
+To test an update from a local project copy instead of downloading a release:
+
+```bash
+python update.py --source . --yes
+```
+
+The updater requires a published GitHub release. If no release has been published yet, it reports that clearly; local-source mode remains available for testing.
 
 ## What It Installs
 
@@ -52,7 +77,7 @@ The installation script:
 4. ✅ Adds configuration to `~/.claude/AGENTS.md` and `~/.claude/CLAUDE.md`
 5. ✅ Adds configuration to `~/.codeium/windsurf/AGENTS.md`
 
-**Important**: Does NOT overwrite existing files; it appends ai-cross-mem content at the end.
+**Important**: The installers preserve existing configuration by appending ai-cross-mem instructions rather than replacing the configuration. Existing configuration is backed up before it is changed. The installers do not delete or overwrite saved memories.
 
 ## Usage
 
@@ -224,17 +249,37 @@ python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
 ls ~/Documents/ai-cross-mem/test/
 ```
 
+### Installer tests
+
+Run the installer checks from the repository's `ai-cross-mem` directory:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+On Windows, this runs the installer twice in an isolated temporary user folder and checks that it does not nest duplicate skill directories. On macOS, it runs the installer twice with an isolated temporary `HOME` and checks installed files, preserved settings, backups, and duplicate hook prevention. Uninstaller tests verify that tracked app files are removed while memories, unrelated settings, and user-added files are preserved. The workflow in `.github/workflows/installer-tests.yml` runs this suite on both Windows and macOS for pushes and pull requests.
+
 ## Uninstallation
 
 ```powershell
 # Windows
 .\uninstall.ps1
 
-# Mac/Linux
-./uninstall.sh
+# Also remove saved memories (requires typing DELETE at the prompt)
+.\uninstall.ps1 -DeleteMemories
 ```
 
-**Note**: By default does NOT delete saved memories in `~/Documents/ai-cross-mem/`. The script asks if you want to delete them.
+```bash
+# macOS
+bash uninstall.sh
+
+# Also remove saved memories (requires typing DELETE at the prompt)
+bash uninstall.sh --delete-memories
+```
+
+The installer records its changes in an install manifest under the user's application-state directory (`%LOCALAPPDATA%\ai-cross-mem\install-manifest.json` on Windows; `~/Library/Application Support/ai-cross-mem/install-manifest.json` on macOS). The uninstaller removes only unchanged files recorded as installed, restores overwritten app files from backups, removes only marked ai-cross-mem sections from shared configuration, and removes only the recorded review hook. If a managed file was edited after installation, it is kept for manual review. Older installations without a manifest use a conservative cleanup that removes only recognizable files/sections.
+
+Saved memories in `~/Documents/ai-cross-mem/` are always kept by default. `-DeleteMemories` / `--delete-memories` requires an additional exact `DELETE` confirmation before removing them.
 
 ## Troubleshooting
 
@@ -276,9 +321,15 @@ python --version  # or python3 --version
 ai-cross-mem/
 ├── README.md                       # This file
 ├── install.ps1                     # Windows installer
-├── install.sh                      # Mac/Linux installer (TODO)
-├── uninstall.ps1                   # Windows uninstaller (TODO)
-├── uninstall.sh                    # Mac/Linux uninstaller (TODO)
+├── install.sh                      # macOS installer
+├── update.py                       # Cross-platform release updater
+├── legacy-files.json               # Explicit list of deprecated installed files
+├── uninstall.ps1                   # Windows uninstaller
+├── uninstall.sh                    # macOS uninstaller
+├── uninstall.py                    # Shared safe-uninstall implementation
+├── install_state.py                # Records installer-owned changes
+├── tests/                           # Installer, updater, and uninstaller tests
+├── .github/workflows/               # Windows and macOS CI
 │
 ├── skills/                         # Skills for each IDE
 │   ├── claude/ai-cross-mem/
@@ -316,12 +367,12 @@ ai-cross-mem/
 - [ ] update_memory.py script
 - [ ] Devin/Windsurf skill
 - [ ] 15-minute review hook
-- [ ] Mac/Linux scripts
-- [ ] Uninstallation scripts
-- [ ] Automated tests
+- [x] macOS installer
+- [x] Windows and macOS uninstallation scripts
+- [x] Automated installer/updater/uninstaller tests
 
 ---
 
 **Version**: 1.0.0  
-**Last updated**: 2026-11-05  
+**Last updated**: 2026-11-22
 **Author**: Hugo Flores (https://github.com/hugoafj)

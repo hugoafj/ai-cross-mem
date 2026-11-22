@@ -31,6 +31,32 @@ Startup cost: zero, because the script is not loaded into context until it is us
 - The current session works in `C:\ai_projects\ai-cross-mem`, and its transcript is in `%USERPROFILE%\.claude\projects\C--ai-projects-ai-cross-mem\`.
 - Any older folders or transcript copies using previous project names are historical artifacts and are outside this repository.
 
+## Installer compatibility
+
+- Windows uses `install.ps1` and supports Windows PowerShell 5.1; build nested paths with two-argument `Join-Path` calls for compatibility with that version.
+- macOS uses `install.sh` and requires Bash plus Python 3. It installs Claude and, when detected, Windsurf configuration and the Claude review hook.
+- Both installers store memories in `~/Documents/ai-cross-mem`, preserve existing configuration by backing it up before appending instructions, and do not remove memories.
+- macOS installation can be started with `bash install.sh` from the project directory; Windows uses `.\install.ps1`.
+- Installer tests live in `tests/test_installers.py`; run them with `python -m unittest discover -s tests -v`.
+- `.github/workflows/installer-tests.yml` runs the installer tests on GitHub-hosted macOS and Windows runners. The macOS test uses a temporary `HOME`, so it does not alter the runner user's own Claude configuration.
+
+## Release updater
+
+- `update.py` fetches the latest published GitHub release for `hugoafj/ai-cross-mem`, unpacks its source archive, and invokes the platform installer. Python's standard library is sufficient.
+- `legacy-files.json` is the explicit allowlist for deprecated installed files. Entries may target only individual files inside the Claude skill, Windsurf skill, or Claude hook directory; memories and global configuration are not valid targets.
+- Before deleting any listed files, the updater asks for confirmation. It removes them only after the release installer succeeds. `--yes` supports unattended updates.
+- `--source <directory>` exercises the same installation and cleanup flow using a local checkout. There are currently no published GitHub releases, so this is the test path until the first release is published.
+
+## Uninstaller and install ownership
+
+- Windows and macOS installers call `install_state.py` before and after installation. It records changed files and backups in a per-user manifest, outside the memories folder.
+- `uninstall.ps1` and `uninstall.sh` are thin platform wrappers around `uninstall.py`.
+- The uninstaller removes a recorded installed file only if its contents still match the install record; pre-existing files are restored from backups, while user-edited app files are preserved for review.
+- Shared Markdown configuration gets explicit HTML comment delimiters. The uninstaller removes only that marked block; legacy config uses the unique ai-cross-mem header/end markers and is left untouched when the block is ambiguous.
+- `settings.json` cleanup targets only the recorded `check_memory.py` hook entry. Other hooks/settings are retained.
+- Memories are retained unless the user opts in and types `DELETE`. The project-root `AGENTS.md` and `CLAUDE.md` are not installation targets.
+- Older installations without a manifest use a conservative fallback that removes only installed files identical to the project copies and recognizable config sections.
+
 
 ## Plan for building the global memory tool
 
