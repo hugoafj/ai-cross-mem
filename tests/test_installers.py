@@ -123,6 +123,10 @@ class InstallerTests(unittest.TestCase):
             self.assertTrue((home_path / "Documents" / "ai-cross-mem").is_dir())
             self.assertTrue((skill / "scripts" / "save_memory.py").is_file())
             self.assertTrue((skill / "hooks" / "check_memory.py").is_file())
+            self.assertFalse(list(skill.rglob("__pycache__")))
+            self.assertFalse(list(skill.rglob("*.pyc")))
+            self.assertFalse(list(skill.rglob("__pycache__")))
+            self.assertFalse(list(skill.rglob("*.pyc")))
             self.assertIn("User rules", (claude / "AGENTS.md").read_text(encoding="utf-8"))
             self.assertIn("ai-cross-mem", (claude / "AGENTS.md").read_text(encoding="utf-8"))
             installed_settings = json.loads(settings.read_text(encoding="utf-8"))
@@ -184,6 +188,11 @@ class InstallerTests(unittest.TestCase):
             env["USERPROFILE"] = home
             env["HOME"] = home
             env["LOCALAPPDATA"] = str(Path(home) / "AppData" / "Local")
+            stale_cache = (
+                Path(home) / ".codeium" / "windsurf" / "skills" /
+                "ai-cross-mem" / "scripts" / "__pycache__"
+            )
+            stale_cache.mkdir(parents=True)
             subprocess.run(
                 [
                     powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
@@ -196,6 +205,8 @@ class InstallerTests(unittest.TestCase):
                 (windsurf / "skills" / "ai-cross-mem" / "scripts" / "save_memory.py").is_file()
             )
             self.assertTrue((windsurf / "hooks.json").is_file())
+            self.assertFalse(list((windsurf / "skills" / "ai-cross-mem").rglob("__pycache__")))
+            self.assertFalse(list((windsurf / "skills" / "ai-cross-mem").rglob("*.pyc")))
             self.assertFalse((Path(home) / ".claude").exists())
 
 

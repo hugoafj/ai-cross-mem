@@ -4,6 +4,22 @@ set -euo pipefail
 say() { printf '%s\n' "$*"; }
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 
+copy_skill() {
+    local source="$1" destination="$2" relative target
+    mkdir -p "$destination"
+    while IFS= read -r -d '' relative; do
+        relative="${relative#./}"
+        target="$destination/$relative"
+        mkdir -p "$(dirname "$target")"
+        cp -p "$source/$relative" "$target"
+    done < <(
+        cd "$source"
+        find . -type d -name '__pycache__' -prune -o \
+            -type f ! -name '*.pyc' ! -name '*.pyo' ! -name '*.pyd' -print0
+    )
+    find "$destination" -type d -name '__pycache__' -empty -delete
+}
+
 [[ "$(uname -s)" == "Darwin" ]] || fail "This installer supports macOS only. On Windows, run install.ps1."
 command -v python3 >/dev/null 2>&1 || fail "Python 3 is required. Install it from https://www.python.org/downloads/"
 integration="${1:-both}"
@@ -32,7 +48,7 @@ say "Installing ai-cross-mem for macOS..."
 mkdir -p "$memory_dir"
 if [[ "$integration" == "claude" || "$integration" == "both" ]]; then
     mkdir -p "$claude_dir/skills" "$claude_skill"
-    cp -R "$project_root/skills/claude/ai-cross-mem/." "$claude_skill/"
+    copy_skill "$project_root/skills/claude/ai-cross-mem" "$claude_skill"
 fi
 
 append_config() {
@@ -67,7 +83,7 @@ if [[ "$integration" == "windsurf" || "$integration" == "both" ]]; then
     mkdir -p "$windsurf_dir"
     [[ -d "$project_root/skills/windsurf/ai-cross-mem" ]] || fail "Windsurf skill files are missing."
     mkdir -p "$windsurf_skill"
-    cp -R "$project_root/skills/windsurf/ai-cross-mem/." "$windsurf_skill/"
+    copy_skill "$project_root/skills/windsurf/ai-cross-mem" "$windsurf_skill"
     append_config "$project_root/config/windsurf/AGENTS.md" "$windsurf_dir/AGENTS.md" "ai-cross-mem: Shared Memory System"
     mkdir -p "$windsurf_dir/ai-cross-mem"
     cp "$project_root/hooks/windsurf/check_memory.py" "$windsurf_dir/ai-cross-mem/"

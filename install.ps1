@@ -29,6 +29,30 @@ function Write-Success { param($msg) Write-Host "✓ $msg" -ForegroundColor Gree
 function Write-Info { param($msg) Write-Host "→ $msg" -ForegroundColor Cyan }
 function Write-Warning { param($msg) Write-Host "⚠ $msg" -ForegroundColor Yellow }
 function Write-ErrorMsg { param($msg) Write-Host "✗ $msg" -ForegroundColor Red }
+function Copy-SkillTree {
+    param([string]$Source, [string]$Destination)
+    Get-ChildItem -Path $Source -Recurse -File |
+        Where-Object {
+            $_.FullName -notmatch '[\\/]+__pycache__([\\/]|$)' -and
+            $_.Extension -notin @('.pyc', '.pyo', '.pyd')
+        } |
+        ForEach-Object {
+            $relativePath = $_.FullName.Substring($Source.Length).TrimStart('\', '/')
+            $targetPath = Join-Path $Destination $relativePath
+            $targetParent = Split-Path $targetPath -Parent
+            if (-not (Test-Path $targetParent)) {
+                New-Item -ItemType Directory -Force -Path $targetParent | Out-Null
+            }
+            Copy-Item -Path $_.FullName -Destination $targetPath -Force
+        }
+    Get-ChildItem -Path $Destination -Recurse -Directory -Force |
+        Where-Object { $_.Name -eq "__pycache__" } |
+        ForEach-Object {
+            if (-not (Get-ChildItem -Path $_.FullName -Force | Select-Object -First 1)) {
+                Remove-Item -Path $_.FullName -Force
+            }
+        }
+}
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
@@ -112,14 +136,14 @@ if (Test-Path $sourceSkill) {
     if (-not (Test-Path $claudeSkills)) {
         New-Item -ItemType Directory -Force -Path $claudeSkills | Out-Null
     }
-    Copy-Item -Path (Join-Path $sourceSkill "*") -Destination $claudeSkills -Recurse -Force
+    Copy-SkillTree -Source $sourceSkill -Destination $claudeSkills
     Write-Success "Skill copied to: $claudeSkills"
 
     # Verify that the scripts work
     $testScript = Join-Path (Join-Path $claudeSkills "scripts") "save_memory.py"
     if (Test-Path $testScript) {
         try {
-            & $pythonCmd $testScript --help | Out-Null
+            & $pythonCmd -B $testScript --help | Out-Null
             if ($LASTEXITCODE -eq 0) {
                 Write-Success "Python scripts verified"
             }
@@ -148,7 +172,7 @@ if ($Integration -in @("Windsurf", "Both")) {
         if (-not (Test-Path $windsurfSkills)) {
             New-Item -ItemType Directory -Force -Path $windsurfSkills | Out-Null
         }
-        Copy-Item -Path (Join-Path $sourceWindsurf "*") -Destination $windsurfSkills -Recurse -Force
+        Copy-SkillTree -Source $sourceWindsurf -Destination $windsurfSkills
         Write-Success "Skill copied to: $windsurfSkills"
     } else {
         Write-ErrorMsg "Windsurf skill not found at: $sourceWindsurf"
@@ -256,7 +280,8 @@ if ($Integration -in @("Windsurf", "Both")) {
 }
 
 # 9. Copy the check_memory.py hook and register it in Claude's settings.json
-Write-Info "Installing automatic review hook..."
+if ($Integration -in @("Claude", "Both")) {
+Write-Info "Installing Claude automatic review hook..."
 $hookScript = Join-Path (Join-Path $projectRoot "hooks") "scripts"
 $hookScript = Join-Path $hookScript "check_memory.py"
 if ($Integration -in @("Claude", "Both") -and (Test-Path $hookScript)) {
@@ -298,6 +323,7 @@ if ($Integration -in @("Claude", "Both") -and (Test-Path $hookScript)) {
 } else {
     Write-Warning "Hook script not found"
 }
+}
 
 # 10. Installation summary
 & $pythonCmd $stateScript capture
@@ -314,9 +340,11 @@ Write-Host ""
 
 Write-Host "Installed files:" -ForegroundColor Cyan
 Write-Host "  → Memories: $memoryBase" -ForegroundColor White
-Write-Host "  → Claude skill: $claudeSkills" -ForegroundColor White
-Write-Host "  → Claude config: $claudeAgents" -ForegroundColor White
-Write-Host "  → Claude config: $claudeMd" -ForegroundColor White
+if ($Integration -in @("Claude", "Both")) {
+    Write-Host "  → Claude skill: $claudeSkills" -ForegroundColor White
+    Write-Host "  → Claude config: $claudeAgents" -ForegroundColor White
+    Write-Host "  → Claude config: $claudeMd" -ForegroundColor White
+}
 
 if ($Integration -in @("Windsurf", "Both")) {
     Write-Host "  → Windsurf skill: $windsurfSkills" -ForegroundColor White
