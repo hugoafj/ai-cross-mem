@@ -274,13 +274,18 @@ def uninstall(delete_memories=False):
 
     items = manifest.get("items", {})
     settings = install_state.home_directory() / ".claude" / "settings.json"
-    remove_hooks(settings, manifest.get("hooks", []), allow_legacy=not has_manifest)
+    owned_paths = [str(name).replace("\\", "/").lower() for name in items]
+    has_claude = not has_manifest or any("/.claude/" in name for name in owned_paths)
+    has_windsurf = not has_manifest or any("/.codeium/windsurf/" in name for name in owned_paths)
+    if has_claude:
+        remove_hooks(settings, manifest.get("hooks", []), allow_legacy=not has_manifest)
 
-    config_paths = [
-        install_state.home_directory() / ".claude" / "AGENTS.md",
-        install_state.home_directory() / ".claude" / "CLAUDE.md",
-        install_state.home_directory() / ".codeium" / "windsurf" / "AGENTS.md",
-    ]
+    config_paths = []
+    home = install_state.home_directory()
+    if has_claude:
+        config_paths.extend([home / ".claude" / "AGENTS.md", home / ".claude" / "CLAUDE.md"])
+    if has_windsurf:
+        config_paths.append(home / ".codeium" / "windsurf" / "AGENTS.md")
     settings_resolved = str(settings.resolve()).casefold()
     config_resolved = {str(path.resolve()).casefold() for path in config_paths}
     processed_config = set()
@@ -299,8 +304,12 @@ def uninstall(delete_memories=False):
     if not has_manifest:
         remove_legacy_skill_files(project_root)
 
-    for root in install_state.managed_roots()[:2]:
-        strip_empty_directories(root)
+    managed_roots = install_state.managed_roots()
+    if has_claude:
+        strip_empty_directories(managed_roots[0])
+    if has_windsurf:
+        strip_empty_directories(managed_roots[1])
+        strip_empty_directories(managed_roots[2])
 
     memories = memory_directory()
     if delete_memories and memories.exists():

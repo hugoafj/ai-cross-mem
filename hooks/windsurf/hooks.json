@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "post_cascade_response": [
+      {
+        "command": "python3 ~/.codeium/windsurf/ai-cross-mem/check_memory.py",
+        "show_output": true
+      }
+    ]
+  }
+}

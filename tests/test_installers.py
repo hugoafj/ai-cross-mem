@@ -12,6 +12,59 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class InstallerTests(unittest.TestCase):
+    def test_windsurf_package_is_self_contained(self):
+        package = ROOT / "skills" / "windsurf" / "ai-cross-mem"
+        for name in (
+            "__init__.py",
+            "utils.py",
+            "save_memory.py",
+            "search_memory.py",
+            "update_memory.py",
+        ):
+            self.assertTrue((package / "scripts" / name).is_file())
+        instructions = (package / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn(".codeium/windsurf/skills/ai-cross-mem/scripts", instructions)
+        hook = json.loads((ROOT / "hooks" / "windsurf" / "hooks.json").read_text())
+        self.assertIn("post_cascade_response", hook["hooks"])
+        hook_script = (ROOT / "hooks" / "windsurf" / "check_memory.py").read_text()
+        self.assertIn(".codeium", hook_script)
+        self.assertNotIn(".claude", hook_script)
+
+    def test_installers_accept_an_explicit_integration_choice(self):
+        powershell = (ROOT / "install.ps1").read_text(encoding="utf-8")
+        shell = (ROOT / "install.sh").read_text(encoding="utf-8")
+        self.assertIn('[ValidateSet("Claude", "Windsurf", "Both")]', powershell)
+        self.assertIn('integration="${1:-both}"', shell)
+        self.assertIn('claude|windsurf|both', shell)
+
+    def test_windsurf_hook_configuration_preserves_other_hooks(self):
+        with tempfile.TemporaryDirectory() as home:
+            config_dir = Path(home) / ".codeium" / "windsurf"
+            config_dir.mkdir(parents=True)
+            config = config_dir / "hooks.json"
+            config.write_text(
+                json.dumps({"hooks": {"post_cascade_response": [
+                    {"command": "python user_hook.py"}
+                ]}}),
+                encoding="utf-8",
+            )
+            env = os.environ.copy()
+            env["USERPROFILE"] = home
+            env["HOME"] = home
+            subprocess.run(
+                [os.environ.get("PYTHON", "python"), str(ROOT / "hooks" / "windsurf" / "configure.py")],
+                cwd=ROOT,
+                env=env,
+                check=True,
+            )
+            result = json.loads(config.read_text(encoding="utf-8"))
+            commands = [
+                entry["command"]
+                for entry in result["hooks"]["post_cascade_response"]
+            ]
+            self.assertIn("python user_hook.py", commands)
+            self.assertTrue(any("ai-cross-mem" in command for command in commands))
+
     def test_macos_installer_has_valid_bash_syntax(self):
         msys_bash = Path(r"C:\msys64\usr\bin\bash.exe")
         bash = str(msys_bash) if os.name == "nt" and msys_bash.exists() else shutil.which("bash")
@@ -94,6 +147,31 @@ class InstallerTests(unittest.TestCase):
             subprocess.run(command, cwd=ROOT, env=env, check=True, capture_output=True, text=True)
             self.assertFalse((skill / "ai-cross-mem").exists())
             self.assertIn("ai-cross-mem", (claude / "AGENTS.md").read_text(encoding="utf-8"))
+
+    def test_windows_windsurf_only_does_not_create_claude_files(self):
+        powershell = os.environ.get("WINDIR", r"C:\Windows") + (
+            r"\System32\WindowsPowerShell\v1.0\powershell.exe"
+        )
+        if not Path(powershell).exists():
+            self.skipTest("Windows PowerShell 5.1 is unavailable")
+        with tempfile.TemporaryDirectory() as home:
+            env = os.environ.copy()
+            env["USERPROFILE"] = home
+            env["HOME"] = home
+            env["LOCALAPPDATA"] = str(Path(home) / "AppData" / "Local")
+            subprocess.run(
+                [
+                    powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                    str(ROOT / "install.ps1"), "-Integration", "Windsurf",
+                ],
+                cwd=ROOT, env=env, check=True, capture_output=True, text=True,
+            )
+            windsurf = Path(home) / ".codeium" / "windsurf"
+            self.assertTrue(
+                (windsurf / "skills" / "ai-cross-mem" / "scripts" / "save_memory.py").is_file()
+            )
+            self.assertTrue((windsurf / "hooks.json").is_file())
+            self.assertFalse((Path(home) / ".claude").exists())
 
 
 if __name__ == "__main__":

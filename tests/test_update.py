@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import update
 
@@ -27,6 +28,19 @@ def make_update_source(destination, legacy_manifest):
 
 
 class UpdateTests(unittest.TestCase):
+    def test_update_selection_matches_manifest_integrations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "manifest.json"
+            manifest.write_text(
+                json.dumps({"items": {
+                    "C:/Users/example/.codeium/windsurf/hooks.json": {},
+                    "C:/Users/example/.codeium/windsurf/skills/ai-cross-mem/SKILL.md": {},
+                }}),
+                encoding="utf-8",
+            )
+            with mock.patch.object(update, "install_manifest_path", return_value=manifest):
+                self.assertEqual(update._installed_integrations(), "windsurf")
+
     def test_legacy_manifest_rejects_path_traversal(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory)

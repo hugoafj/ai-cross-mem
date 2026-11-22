@@ -131,7 +131,38 @@ def _load_legacy_files(source):
     return deletions
 
 
-def _run_installer(source):
+def _installed_integrations():
+    manifest_path = install_manifest_path()
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        paths = manifest.get("items", {}).keys()
+    except (OSError, json.JSONDecodeError, AttributeError):
+        return "both"
+    integrations = set()
+    for path in paths:
+        normalized = str(path).replace("\\", "/").lower()
+        if "/.claude/" in normalized:
+            integrations.add("claude")
+        if "/.codeium/windsurf/" in normalized:
+            integrations.add("windsurf")
+    return ",".join(sorted(integrations)) if integrations else "both"
+
+
+def install_manifest_path():
+    home = Path(os.environ.get("USERPROFILE", str(Path.home()))) if os.name == "nt" else Path.home()
+    if os.name == "nt":
+        root = Path(os.environ.get("LOCALAPPDATA", str(home / "AppData" / "Local")))
+    elif platform.system() == "Darwin":
+        root = home / "Library" / "Application Support"
+    else:
+        root = Path(os.environ.get("XDG_STATE_HOME", str(home / ".local" / "state")))
+    return root / "ai-cross-mem" / "install-manifest.json"
+
+
+def _run_installer(source, integrations="both"):
+    selected = integrations.split(",")
+    windows_selection = "Both" if selected == ["claude", "windsurf"] else selected[0].capitalize()
+    mac_selection = "both" if selected == ["claude", "windsurf"] else selected[0]
     system = platform.system()
     if system == "Windows":
         command = [
@@ -141,9 +172,11 @@ def _run_installer(source):
             "Bypass",
             "-File",
             str(source / "install.ps1"),
+            "-Integration",
+            windows_selection,
         ]
     elif system == "Darwin":
-        command = ["bash", str(source / "install.sh")]
+        command = ["bash", str(source / "install.sh"), mac_selection]
     else:
         raise UpdateError("Updates are supported on Windows and macOS only.")
     try:
@@ -178,7 +211,7 @@ def update(source=None, assume_yes=False):
                 print("Update cancelled.")
                 return False
 
-        _run_installer(source)
+        _run_installer(source, _installed_integrations())
         for path in existing:
             path.unlink()
             print("Removed deprecated file: {}".format(path))

@@ -37,6 +37,8 @@ def managed_roots():
     return [
         home / ".claude" / "skills" / "ai-cross-mem",
         home / ".codeium" / "windsurf" / "skills" / "ai-cross-mem",
+        home / ".codeium" / "windsurf" / "ai-cross-mem",
+        home / ".codeium" / "windsurf" / "hooks.json",
         home / ".claude" / "AGENTS.md",
         home / ".claude" / "CLAUDE.md",
         home / ".claude" / "settings.json",

@@ -34,15 +34,16 @@ Startup cost: zero, because the script is not loaded into context until it is us
 ## Installer compatibility
 
 - Windows uses `install.ps1` and supports Windows PowerShell 5.1; build nested paths with two-argument `Join-Path` calls for compatibility with that version.
-- macOS uses `install.sh` and requires Bash plus Python 3. It installs Claude and, when detected, Windsurf configuration and the Claude review hook.
+- macOS uses `install.sh` and requires Bash plus Python 3. It accepts `claude`, `windsurf`, or `both`; Windows accepts the matching `-Integration` parameter.
+- Claude and Windsurf have separate scripts, instructions, hook adapters, and hook state. Their memory files intentionally share `~/Documents/ai-cross-mem`. Cascade hook output is surfaced to the user and cannot inject Claude-style system messages into agent context.
 - Both installers store memories in `~/Documents/ai-cross-mem`, preserve existing configuration by backing it up before appending instructions, and do not remove memories.
-- macOS installation can be started with `bash install.sh` from the project directory; Windows uses `.\install.ps1`.
+- macOS installation can be started with `bash install.sh [claude|windsurf|both]` from the project directory; Windows uses `.\install.ps1 -Integration Claude|Windsurf|Both`.
 - Installer tests live in `tests/test_installers.py`; run them with `python -m unittest discover -s tests -v`.
 - `.github/workflows/installer-tests.yml` runs the installer tests on GitHub-hosted macOS and Windows runners. The macOS test uses a temporary `HOME`, so it does not alter the runner user's own Claude configuration.
 
 ## Release updater
 
-- `update.py` fetches the latest published GitHub release for `hugoafj/ai-cross-mem`, unpacks its source archive, and invokes the platform installer. Python's standard library is sufficient.
+- `update.py` fetches the latest published GitHub release for `hugoafj/ai-cross-mem`, unpacks its source archive, and invokes the platform installer for the integrations detected in the local install manifest. Python's standard library is sufficient.
 - `legacy-files.json` is the explicit allowlist for deprecated installed files. Entries may target only individual files inside the Claude skill, Windsurf skill, or Claude hook directory; memories and global configuration are not valid targets.
 - Before deleting any listed files, the updater asks for confirmation. It removes them only after the release installer succeeds. `--yes` supports unattended updates.
 - `--source <directory>` exercises the same installation and cleanup flow using a local checkout. There are currently no published GitHub releases, so this is the test path until the first release is published.

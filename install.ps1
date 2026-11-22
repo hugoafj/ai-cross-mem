@@ -21,7 +21,9 @@
 
 [CmdletBinding()]
 param(
-    [switch]$VerboseMode
+    [switch]$VerboseMode,
+    [ValidateSet("Claude", "Windsurf", "Both")]
+    [string]$Integration = "Both"
 )
 
 # Output colors
@@ -98,6 +100,7 @@ if (Test-Path $memoryBase) {
 }
 
 # 4. Copy the skill to Claude
+if ($Integration -in @("Claude", "Both")) {
 Write-Info "Installing skill for Claude Code..."
 $sourceSkill = Join-Path (Join-Path (Join-Path $projectRoot "skills") "claude") "ai-cross-mem"
 if (Test-Path $sourceSkill) {
@@ -129,11 +132,13 @@ if (Test-Path $sourceSkill) {
 } else {
     Write-ErrorMsg "Claude skill not found at: $sourceSkill"
 }
+}
 
 # 5. Copy the skill to Windsurf (if installed)
 Write-Info "Checking Windsurf/Devin..."
 $windsurfBase = Join-Path (Join-Path $homeDir ".codeium") "windsurf"
-if (Test-Path $windsurfBase) {
+if ($Integration -in @("Windsurf", "Both")) {
+    New-Item -ItemType Directory -Force -Path $windsurfBase | Out-Null
     Write-Info "Windsurf found, installing skill..."
     $sourceWindsurf = Join-Path (Join-Path (Join-Path $projectRoot "skills") "windsurf") "ai-cross-mem"
 
@@ -148,13 +153,15 @@ if (Test-Path $windsurfBase) {
         Copy-Item -Path (Join-Path $sourceWindsurf "*") -Destination $windsurfSkills -Recurse -Force
         Write-Success "Skill copied to: $windsurfSkills"
     } else {
-        Write-Warning "Windsurf skill not available yet (TODO)"
+        Write-ErrorMsg "Windsurf skill not found at: $sourceWindsurf"
+        exit 1
     }
 } else {
     Write-Warning "Windsurf not found, skipping..."
 }
 
 # 6. Handle the global Claude AGENTS.md (do NOT overwrite)
+if ($Integration -in @("Claude", "Both")) {
 Write-Info "Configuring global AGENTS.md for Claude..."
 $agentsContent = Get-Content (Join-Path (Join-Path (Join-Path $projectRoot "config") "claude") "AGENTS.md") -Raw
 $agentsContent = "<!-- BEGIN AI-CROSS-MEM MANAGED BLOCK -->`n$agentsContent`n<!-- END AI-CROSS-MEM MANAGED BLOCK -->"
@@ -182,8 +189,10 @@ if (Test-Path $claudeAgents) {
     Set-Content -Path $claudeAgents -Value $agentsContent
     Write-Success "AGENTS.md created: $claudeAgents"
 }
+}
 
 # 7. Handle the global CLAUDE.md (do NOT overwrite)
+if ($Integration -in @("Claude", "Both")) {
 Write-Info "Configuring global CLAUDE.md for Claude..."
 $claudeMdContent = Get-Content (Join-Path (Join-Path (Join-Path $projectRoot "config") "claude") "CLAUDE.md") -Raw
 $claudeMdContent = "<!-- BEGIN AI-CROSS-MEM MANAGED BLOCK -->`n$claudeMdContent`n<!-- END AI-CROSS-MEM MANAGED BLOCK -->"
@@ -211,9 +220,17 @@ if (Test-Path $claudeMd) {
     Set-Content -Path $claudeMd -Value $claudeMdContent
     Write-Success "CLAUDE.md created: $claudeMd"
 }
+}
 
 # 8. Handle the Windsurf AGENTS.md (if applicable)
-if (Test-Path $windsurfBase) {
+if ($Integration -in @("Windsurf", "Both")) {
+    New-Item -ItemType Directory -Force -Path $windsurfBase | Out-Null
+    $windsurfHookDir = Join-Path $windsurfBase "ai-cross-mem"
+    New-Item -ItemType Directory -Force -Path $windsurfHookDir | Out-Null
+    Copy-Item (Join-Path (Join-Path (Join-Path $projectRoot "hooks") "windsurf") "check_memory.py") $windsurfHookDir -Force
+    $windsurfHookConfig = Join-Path (Join-Path (Join-Path $projectRoot "hooks") "windsurf") "configure.py"
+    & $pythonCmd $windsurfHookConfig
+    if ($LASTEXITCODE -ne 0) { Write-ErrorMsg "Could not configure Windsurf hook."; exit 1 }
     Write-Info "Configuring AGENTS.md for Windsurf..."
     $windsurfAgentsSource = Join-Path (Join-Path (Join-Path $projectRoot "config") "windsurf") "AGENTS.md"
 
@@ -244,7 +261,7 @@ if (Test-Path $windsurfBase) {
 Write-Info "Installing automatic review hook..."
 $hookScript = Join-Path (Join-Path $projectRoot "hooks") "scripts"
 $hookScript = Join-Path $hookScript "check_memory.py"
-if (Test-Path $hookScript) {
+if ($Integration -in @("Claude", "Both") -and (Test-Path $hookScript)) {
     $claudeHooksDir = Join-Path (Join-Path (Join-Path $homeDir ".claude") "skills") "ai-cross-mem"
     $claudeHooksDir = Join-Path $claudeHooksDir "hooks"
     if (-not (Test-Path $claudeHooksDir)) {
@@ -303,7 +320,7 @@ Write-Host "  → Claude skill: $claudeSkills" -ForegroundColor White
 Write-Host "  → Claude config: $claudeAgents" -ForegroundColor White
 Write-Host "  → Claude config: $claudeMd" -ForegroundColor White
 
-if (Test-Path $windsurfBase) {
+if ($Integration -in @("Windsurf", "Both")) {
     Write-Host "  → Windsurf skill: $windsurfSkills" -ForegroundColor White
     Write-Host "  → Windsurf config: $windsurfAgents" -ForegroundColor White
 }
