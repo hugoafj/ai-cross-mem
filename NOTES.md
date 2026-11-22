@@ -36,6 +36,7 @@ Startup cost: zero, because the script is not loaded into context until it is us
 - Windows uses `install.ps1` and supports Windows PowerShell 5.1; build nested paths with two-argument `Join-Path` calls for compatibility with that version.
 - macOS uses `install.sh` and requires Bash plus Python 3. It accepts `claude`, `windsurf`, or `both`; Windows accepts the matching `-Integration` parameter.
 - Claude and Windsurf have separate scripts, instructions, hook adapters, and hook state. Their memory files intentionally share `~/Documents/ai-cross-mem`. Cascade hook output is surfaced to the user and cannot inject Claude-style system messages into agent context.
+- **Before sending the acm-2 PR to Hugo:** ask him to test the full installation and hook behavior on macOS. Local validation was performed on Windows; the macOS integration test was skipped because no Mac was available.
 - Both installers store memories in `~/Documents/ai-cross-mem`, preserve existing configuration by backing it up before appending instructions, and do not remove memories.
 - macOS installation can be started with `bash install.sh [claude|windsurf|both]` from the project directory; Windows uses `.\install.ps1 -Integration Claude|Windsurf|Both`.
 - Installer tests live in `tests/test_installers.py`; run them with `python -m unittest discover -s tests -v`.
