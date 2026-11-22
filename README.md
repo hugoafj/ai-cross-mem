@@ -83,7 +83,7 @@ only the selected integration(s):
 3. Windsurf installs its skill, Windsurf configuration, and Cascade hook under Windsurf's own paths.
 4. Choosing one integration does not install or configure the other.
 
-**Important**: The installers preserve existing configuration by appending ai-cross-mem instructions rather than replacing the configuration. Existing configuration is backed up before it is changed. The installers do not delete or overwrite saved memories.
+**Important**: The installers preserve existing configuration by appending ai-cross-mem instructions rather than replacing the configuration. Existing configuration is backed up before it is changed. They exclude Python bytecode/cache artifacts from copied skills and do not delete or overwrite saved memories.
 
 ## Usage
 
