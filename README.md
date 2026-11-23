@@ -1,6 +1,6 @@
 # ai-cross-mem: Shared Memory System
 
-Shared memory system across sessions for Claude Code and Devin/Windsurf. Automatically saves plans, decisions, and solved problems so you don't lose context when opening new sessions.
+Shared memory system across sessions for Claude Code and Windsurf. Its skills guide the agent to save plans, decisions, and solved problems so you can recover context in later sessions.
 
 ## Problem It Solves
 
@@ -13,7 +13,7 @@ When working with AI across different sessions, the agent doesn't remember what 
 
 ## Features
 
-- ✅ **Automatic memory** - Saves plans, decisions, and problems without asking
+- ✅ **Agent-guided memory** - Skills instruct the agent when and how to save plans, decisions, and problems
 - ✅ **Smart search** - Agent finds relevant memories when you ask
 - ✅ **Cross-IDE** - Works in Claude Code and Devin/Windsurf
 - ✅ **Simple** - Just Markdown files, no database
@@ -24,35 +24,66 @@ When working with AI across different sessions, the agent doesn't remember what 
 ### Requirements
 
 - Python 3.7+ installed
-- Claude Code or Devin/Windsurf installed
-- PowerShell 5.1+ (Windows) or Bash 4+ (Mac/Linux)
+- Claude Code, Windsurf, or both (choose at install time)
+- Windows PowerShell 5.1+ (Windows) or Bash 3.2+ (macOS)
 
 ### Windows
 
 ```powershell
 cd C:\AI_Projects\ai-cross-mem
-.\install.ps1
+.\install.ps1 -Integration Both
 ```
 
-### Mac/Linux
+Use `-Integration Claude` or `-Integration Windsurf` to install only one.
+The default is `Both`. On macOS, use `bash install.sh claude`,
+`bash install.sh windsurf`, or `bash install.sh both` (default: `both`).
+
+### macOS
 
 ```bash
 cd ~/ai_projects/ai-cross-mem
-chmod +x install.sh
-./install.sh
+bash install.sh
 ```
+
+The macOS installer requires Python 3. It installs only the selected integration(s); Claude and Windsurf use separate scripts, instructions, and hook state. Their memory files intentionally share `~/Documents/ai-cross-mem`. Existing configuration files are backed up before ai-cross-mem instructions are appended.
+
+**PR validation note:** On Windows, 14 tests passed and the macOS integration test was skipped. The Windsurf-only install and hook script passed local checks, but the Cascade UI has not yet been verified with a real `post_write_code` event. Before sending the PR, test both the installation and visible reminder on macOS and verify the reminder in Windsurf/Cascade on Windows.
+
+## Updating
+
+The updater downloads the latest published release from `hugoafj/ai-cross-mem`, then reruns the installer for integrations recorded in the local install manifest:
+
+```powershell
+# Windows
+python update.py
+```
+
+```bash
+# macOS
+python3 update.py
+```
+
+If a release declares deprecated files in `legacy-files.json`, the updater lists them and asks for confirmation before installation. It removes only those individual files from the supported skill directories, and only after the new installer succeeds; it never targets memories or global configuration. Use `--yes` to skip that confirmation in automation.
+
+To test an update from a local project copy instead of downloading a release:
+
+```bash
+python update.py --source . --yes
+```
+
+The updater requires a published GitHub release. If no release has been published yet, it reports that clearly; local-source mode remains available for testing.
 
 ## What It Installs
 
-The installation script:
+The installation script creates the shared memory directory and then installs
+only the selected integration(s):
 
-1. ✅ Creates `~/Documents/ai-cross-mem/` for storing memories
-2. ✅ Copies skill to `~/.claude/skills/ai-cross-mem/` (Claude)
-3. ✅ Copies skill to `~/.codeium/windsurf/skills/ai-cross-mem/` (Devin)
-4. ✅ Adds configuration to `~/.claude/AGENTS.md` and `~/.claude/CLAUDE.md`
-5. ✅ Adds configuration to `~/.codeium/windsurf/AGENTS.md`
+1. Creates `~/Documents/ai-cross-mem/` for shared memories.
+2. Claude installs its skill, Claude configuration, and Claude hook under Claude's own paths.
+3. Windsurf installs its skill, Windsurf configuration, and Cascade hook under Windsurf's own paths.
+4. Choosing one integration does not install or configure the other.
 
-**Important**: Does NOT overwrite existing files; it appends ai-cross-mem content at the end.
+**Important**: The installers preserve existing configuration by appending ai-cross-mem instructions rather than replacing the configuration. Existing configuration is backed up before it is changed. They exclude Python bytecode/cache artifacts from copied skills and do not delete or overwrite saved memories.
 
 ## Usage
 
@@ -60,13 +91,13 @@ The installation script:
 
 The system works automatically:
 
-**Saves memory when**:
+**The agent is instructed to save memory when**:
 - You complete a plan
 - You make an important technical decision
 - You solve a complex problem
 - You say: "save this to memory"
 
-**Searches memory when**:
+**The agent is instructed to search memory when**:
 - You ask: "what did we do with X", "why did we decide Y"
 - You reference something from previous sessions
 
@@ -224,17 +255,37 @@ python ~/.claude/skills/ai-cross-mem/scripts/search_memory.py \
 ls ~/Documents/ai-cross-mem/test/
 ```
 
+### Installer tests
+
+Run the installer checks from the repository's `ai-cross-mem` directory:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+On Windows, this runs the installer twice in an isolated temporary user folder and checks that it does not nest duplicate skill directories. On macOS, it runs the installer twice with an isolated temporary `HOME` and checks installed files, preserved settings, backups, and duplicate hook prevention. Uninstaller tests verify that tracked app files are removed while memories, unrelated settings, and user-added files are preserved. The workflow in `.github/workflows/installer-tests.yml` runs this suite on both Windows and macOS for pushes and pull requests.
+
 ## Uninstallation
 
 ```powershell
 # Windows
 .\uninstall.ps1
 
-# Mac/Linux
-./uninstall.sh
+# Also remove saved memories (requires typing DELETE at the prompt)
+.\uninstall.ps1 -DeleteMemories
 ```
 
-**Note**: By default does NOT delete saved memories in `~/Documents/ai-cross-mem/`. The script asks if you want to delete them.
+```bash
+# macOS
+bash uninstall.sh
+
+# Also remove saved memories (requires typing DELETE at the prompt)
+bash uninstall.sh --delete-memories
+```
+
+The installer records its changes in an install manifest under the user's application-state directory (`%LOCALAPPDATA%\ai-cross-mem\install-manifest.json` on Windows; `~/Library/Application Support/ai-cross-mem/install-manifest.json` on macOS). The uninstaller removes only unchanged files recorded as installed, restores overwritten app files from backups, removes only marked ai-cross-mem sections from shared configuration, and removes only the recorded review hook. If a managed file was edited after installation, it is kept for manual review. Older installations without a manifest use a conservative cleanup that removes only recognizable files/sections.
+
+Saved memories in `~/Documents/ai-cross-mem/` are always kept by default. `-DeleteMemories` / `--delete-memories` requires an additional exact `DELETE` confirmation before removing them.
 
 ## Troubleshooting
 
@@ -276,9 +327,15 @@ python --version  # or python3 --version
 ai-cross-mem/
 ├── README.md                       # This file
 ├── install.ps1                     # Windows installer
-├── install.sh                      # Mac/Linux installer (TODO)
-├── uninstall.ps1                   # Windows uninstaller (TODO)
-├── uninstall.sh                    # Mac/Linux uninstaller (TODO)
+├── install.sh                      # macOS installer
+├── update.py                       # Cross-platform release updater
+├── legacy-files.json               # Explicit list of deprecated installed files
+├── uninstall.ps1                   # Windows uninstaller
+├── uninstall.sh                    # macOS uninstaller
+├── uninstall.py                    # Shared safe-uninstall implementation
+├── install_state.py                # Records installer-owned changes
+├── tests/                           # Installer, updater, and uninstaller tests
+├── .github/workflows/               # Windows and macOS CI
 │
 ├── skills/                         # Skills for each IDE
 │   ├── claude/ai-cross-mem/
@@ -287,10 +344,12 @@ ai-cross-mem/
 │   │       ├── __init__.py
 │   │       ├── utils.py            # Shared functions
 │   │       ├── save_memory.py      # Save memories
-│   │       └── search_memory.py    # Search memories
+│   │       ├── search_memory.py    # Search memories
+│   │       └── update_memory.py    # Update memories
 │   │
 │   └── windsurf/ai-cross-mem/
-│       └── SKILL.md                # Skill for Devin
+│       ├── SKILL.md                # Skill for Windsurf
+│       └── scripts/                # Standalone Windsurf scripts
 │
 ├── config/                         # Global configuration
 │   ├── claude/
@@ -299,9 +358,11 @@ ai-cross-mem/
 │   └── windsurf/
 │       └── AGENTS.md               # Devin rules
 │
-├── hooks/                          # Hooks
-│   ├── claude/hooks.json
-│   └── scripts/check_memory.py
+├── hooks/                          # Integration-specific hooks
+│   ├── claude/
+│   │   └── hooks.json
+│   ├── scripts/check_memory.py      # Claude hook script
+│   └── windsurf/                    # Cascade hook and configuration
 │
 └── templates/
     └── memory_template.md          # Template
@@ -313,15 +374,15 @@ ai-cross-mem/
 - [x] Claude skill
 - [x] Claude global configuration
 - [x] Windows installation script
-- [ ] update_memory.py script
-- [ ] Devin/Windsurf skill
-- [ ] 15-minute review hook
-- [ ] Mac/Linux scripts
-- [ ] Uninstallation scripts
-- [ ] Automated tests
+- [x] update_memory.py script
+- [x] Windsurf skill
+- [x] 15-minute review hook (Claude hook; Windsurf hook displays a user-facing reminder)
+- [x] macOS installer
+- [x] Windows and macOS uninstallation scripts
+- [x] Automated installer/updater/uninstaller tests
 
 ---
 
 **Version**: 1.0.0  
-**Last updated**: 2026-11-05  
+**Last updated**: 2026-11-22
 **Author**: Hugo Flores (https://github.com/hugoafj)

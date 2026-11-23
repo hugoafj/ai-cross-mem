@@ -31,6 +31,35 @@ Startup cost: zero, because the script is not loaded into context until it is us
 - The current session works in `C:\ai_projects\ai-cross-mem`, and its transcript is in `%USERPROFILE%\.claude\projects\C--ai-projects-ai-cross-mem\`.
 - Any older folders or transcript copies using previous project names are historical artifacts and are outside this repository.
 
+## Installer compatibility
+
+- Windows uses `install.ps1` and supports Windows PowerShell 5.1; build nested paths with two-argument `Join-Path` calls for compatibility with that version.
+- macOS uses `install.sh` and requires Bash plus Python 3. It accepts `claude`, `windsurf`, or `both`; Windows accepts the matching `-Integration` parameter.
+- Claude and Windsurf have separate scripts, instructions, hook adapters, and hook state. Their memory files intentionally share `~/Documents/ai-cross-mem`. Windsurf's post-write hook can display a reminder to the user, but cannot inject Claude-style system messages into agent context.
+- **PR validation status for Hugo:** on Windows, the test suite passed (14 passed; the macOS integration test was skipped), the Windsurf-only installation completed without touching Claude-owned files, no Python bytecode/cache remained in the installed skill, and the installed hook script emitted the expected reminder for a simulated Cascade event. Still verify on a Mac and in the actual Cascade UI that a `post_write_code` action loads the user hook and displays its reminder; running the script with simulated input does not prove the UI integration.
+- Installers exclude Python bytecode and `__pycache__` from copied skill files; these are local runtime artifacts, not source files.
+- Both installers store memories in `~/Documents/ai-cross-mem`, preserve existing configuration by backing it up before appending instructions, and do not remove memories.
+- macOS installation can be started with `bash install.sh [claude|windsurf|both]` from the project directory; Windows uses `.\install.ps1 -Integration Claude|Windsurf|Both`.
+- Installer tests live in `tests/test_installers.py`; run them with `python -m unittest discover -s tests -v`.
+- `.github/workflows/installer-tests.yml` runs the installer tests on GitHub-hosted macOS and Windows runners. The macOS test uses a temporary `HOME`, so it does not alter the runner user's own Claude configuration.
+
+## Release updater
+
+- `update.py` fetches the latest published GitHub release for `hugoafj/ai-cross-mem`, unpacks its source archive, and invokes the platform installer for the integrations detected in the local install manifest. Python's standard library is sufficient.
+- `legacy-files.json` is the explicit allowlist for deprecated installed files. Entries may target only individual files inside the Claude skill, Windsurf skill, or Claude hook directory; memories and global configuration are not valid targets.
+- Before deleting any listed files, the updater asks for confirmation. It removes them only after the release installer succeeds. `--yes` supports unattended updates.
+- `--source <directory>` exercises the same installation and cleanup flow using a local checkout. There are currently no published GitHub releases, so this is the test path until the first release is published.
+
+## Uninstaller and install ownership
+
+- Windows and macOS installers call `install_state.py` before and after installation. It records changed files and backups in a per-user manifest, outside the memories folder.
+- `uninstall.ps1` and `uninstall.sh` are thin platform wrappers around `uninstall.py`.
+- The uninstaller removes a recorded installed file only if its contents still match the install record; pre-existing files are restored from backups, while user-edited app files are preserved for review.
+- Shared Markdown configuration gets explicit HTML comment delimiters. The uninstaller removes only that marked block; legacy config uses the unique ai-cross-mem header/end markers and is left untouched when the block is ambiguous.
+- `settings.json` cleanup targets only the recorded `check_memory.py` hook entry. Other hooks/settings are retained.
+- Memories are retained unless the user opts in and types `DELETE`. The project-root `AGENTS.md` and `CLAUDE.md` are not installation targets.
+- Older installations without a manifest use a conservative fallback that removes only installed files identical to the project copies and recognizable config sections.
+
 
 ## Plan for building the global memory tool
 

@@ -6,10 +6,8 @@
 .DESCRIPTION
     Installs the ai-cross-mem shared memory system:
     - Creates the memory directory in ~/Documents/ai-cross-mem/
-    - Copies the skill to Claude (~/.claude/skills/ai-cross-mem/)
-    - Copies the skill to Windsurf (~/.codeium/windsurf/skills/ai-cross-mem/)
-    - Adds configuration to AGENTS.md and CLAUDE.md (without overwriting)
-    - Registers the automatic review hook in ~/.claude/settings.json
+    - Installs only the selected integration: Claude, Windsurf, or Both
+    - Preserves existing configuration and registers the selected hook
 
 .PARAMETER Verbose
     Shows detailed information during installation
@@ -21,7 +19,9 @@
 
 [CmdletBinding()]
 param(
-    [switch]$VerboseMode
+    [switch]$VerboseMode,
+    [ValidateSet("Claude", "Windsurf", "Both")]
+    [string]$Integration = "Both"
 )
 
 # Output colors
@@ -29,6 +29,30 @@ function Write-Success { param($msg) Write-Host "✓ $msg" -ForegroundColor Gree
 function Write-Info { param($msg) Write-Host "→ $msg" -ForegroundColor Cyan }
 function Write-Warning { param($msg) Write-Host "⚠ $msg" -ForegroundColor Yellow }
 function Write-ErrorMsg { param($msg) Write-Host "✗ $msg" -ForegroundColor Red }
+function Copy-SkillTree {
+    param([string]$Source, [string]$Destination)
+    Get-ChildItem -Path $Source -Recurse -File |
+        Where-Object {
+            $_.FullName -notmatch '[\\/]+__pycache__([\\/]|$)' -and
+            $_.Extension -notin @('.pyc', '.pyo', '.pyd')
+        } |
+        ForEach-Object {
+            $relativePath = $_.FullName.Substring($Source.Length).TrimStart('\', '/')
+            $targetPath = Join-Path $Destination $relativePath
+            $targetParent = Split-Path $targetPath -Parent
+            if (-not (Test-Path $targetParent)) {
+                New-Item -ItemType Directory -Force -Path $targetParent | Out-Null
+            }
+            Copy-Item -Path $_.FullName -Destination $targetPath -Force
+        }
+    Get-ChildItem -Path $Destination -Recurse -Directory -Force |
+        Where-Object { $_.Name -eq "__pycache__" } |
+        ForEach-Object {
+            if (-not (Get-ChildItem -Path $_.FullName -Force | Select-Object -First 1)) {
+                Remove-Item -Path $_.FullName -Force
+            }
+        }
+}
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
@@ -73,14 +97,20 @@ Write-Success "System: $os"
 Write-Success "Home: $homeDir"
 
 # Important paths
-$memoryBase = Join-Path $homeDir "Documents" "ai-cross-mem"
-$claudeSkills = Join-Path $homeDir ".claude" "skills" "ai-cross-mem"
-$claudeAgents = Join-Path $homeDir ".claude" "AGENTS.md"
-$claudeMd = Join-Path $homeDir ".claude" "CLAUDE.md"
-$windsurfSkills = Join-Path $homeDir ".codeium" "windsurf" "skills" "ai-cross-mem"
-$windsurfAgents = Join-Path $homeDir ".codeium" "windsurf" "AGENTS.md"
+$memoryBase = Join-Path (Join-Path $homeDir "Documents") "ai-cross-mem"
+$claudeSkills = Join-Path (Join-Path (Join-Path $homeDir ".claude") "skills") "ai-cross-mem"
+$claudeAgents = Join-Path (Join-Path $homeDir ".claude") "AGENTS.md"
+$claudeMd = Join-Path (Join-Path $homeDir ".claude") "CLAUDE.md"
+$windsurfSkills = Join-Path (Join-Path (Join-Path (Join-Path $homeDir ".codeium") "windsurf") "skills") "ai-cross-mem"
+$windsurfAgents = Join-Path (Join-Path (Join-Path $homeDir ".codeium") "windsurf") "AGENTS.md"
 
 $projectRoot = $PSScriptRoot
+$stateScript = Join-Path $projectRoot "install_state.py"
+& $pythonCmd $stateScript begin
+if ($LASTEXITCODE -ne 0) {
+    Write-ErrorMsg "Could not record pre-install state; aborting before changes."
+    exit 1
+}
 
 # 3. Create the memory directory
 Write-Info "Creating memory directory..."
@@ -92,8 +122,9 @@ if (Test-Path $memoryBase) {
 }
 
 # 4. Copy the skill to Claude
+if ($Integration -in @("Claude", "Both")) {
 Write-Info "Installing skill for Claude Code..."
-$sourceSkill = Join-Path $projectRoot "skills" "claude" "ai-cross-mem"
+$sourceSkill = Join-Path (Join-Path (Join-Path $projectRoot "skills") "claude") "ai-cross-mem"
 if (Test-Path $sourceSkill) {
     # Create the parent directory if it does not exist
     $claudeSkillsParent = Split-Path $claudeSkills -Parent
@@ -102,14 +133,17 @@ if (Test-Path $sourceSkill) {
     }
 
     # Copy skill
-    Copy-Item -Path $sourceSkill -Destination $claudeSkills -Recurse -Force
+    if (-not (Test-Path $claudeSkills)) {
+        New-Item -ItemType Directory -Force -Path $claudeSkills | Out-Null
+    }
+    Copy-SkillTree -Source $sourceSkill -Destination $claudeSkills
     Write-Success "Skill copied to: $claudeSkills"
 
     # Verify that the scripts work
-    $testScript = Join-Path $claudeSkills "scripts" "save_memory.py"
+    $testScript = Join-Path (Join-Path $claudeSkills "scripts") "save_memory.py"
     if (Test-Path $testScript) {
         try {
-            & $pythonCmd $testScript --help | Out-Null
+            & $pythonCmd -B $testScript --help | Out-Null
             if ($LASTEXITCODE -eq 0) {
                 Write-Success "Python scripts verified"
             }
@@ -120,31 +154,39 @@ if (Test-Path $sourceSkill) {
 } else {
     Write-ErrorMsg "Claude skill not found at: $sourceSkill"
 }
+}
 
 # 5. Copy the skill to Windsurf (if installed)
 Write-Info "Checking Windsurf/Devin..."
-$windsurfBase = Join-Path $homeDir ".codeium" "windsurf"
-if (Test-Path $windsurfBase) {
+$windsurfBase = Join-Path (Join-Path $homeDir ".codeium") "windsurf"
+if ($Integration -in @("Windsurf", "Both")) {
+    New-Item -ItemType Directory -Force -Path $windsurfBase | Out-Null
     Write-Info "Windsurf found, installing skill..."
-    $sourceWindsurf = Join-Path $projectRoot "skills" "windsurf" "ai-cross-mem"
+    $sourceWindsurf = Join-Path (Join-Path (Join-Path $projectRoot "skills") "windsurf") "ai-cross-mem"
 
     if (Test-Path $sourceWindsurf) {
         $windsurfSkillsParent = Split-Path $windsurfSkills -Parent
         if (-not (Test-Path $windsurfSkillsParent)) {
             New-Item -ItemType Directory -Force -Path $windsurfSkillsParent | Out-Null
         }
-        Copy-Item -Path $sourceWindsurf -Destination $windsurfSkills -Recurse -Force
+        if (-not (Test-Path $windsurfSkills)) {
+            New-Item -ItemType Directory -Force -Path $windsurfSkills | Out-Null
+        }
+        Copy-SkillTree -Source $sourceWindsurf -Destination $windsurfSkills
         Write-Success "Skill copied to: $windsurfSkills"
     } else {
-        Write-Warning "Windsurf skill not available yet (TODO)"
+        Write-ErrorMsg "Windsurf skill not found at: $sourceWindsurf"
+        exit 1
     }
 } else {
     Write-Warning "Windsurf not found, skipping..."
 }
 
 # 6. Handle the global Claude AGENTS.md (do NOT overwrite)
+if ($Integration -in @("Claude", "Both")) {
 Write-Info "Configuring global AGENTS.md for Claude..."
-$agentsContent = Get-Content (Join-Path $projectRoot "config" "claude" "AGENTS.md") -Raw
+$agentsContent = Get-Content (Join-Path (Join-Path (Join-Path $projectRoot "config") "claude") "AGENTS.md") -Raw
+$agentsContent = "<!-- BEGIN AI-CROSS-MEM MANAGED BLOCK -->`n$agentsContent`n<!-- END AI-CROSS-MEM MANAGED BLOCK -->"
 
 if (Test-Path $claudeAgents) {
     # File exists, check whether it already has ai-cross-mem
@@ -169,10 +211,13 @@ if (Test-Path $claudeAgents) {
     Set-Content -Path $claudeAgents -Value $agentsContent
     Write-Success "AGENTS.md created: $claudeAgents"
 }
+}
 
 # 7. Handle the global CLAUDE.md (do NOT overwrite)
+if ($Integration -in @("Claude", "Both")) {
 Write-Info "Configuring global CLAUDE.md for Claude..."
-$claudeMdContent = Get-Content (Join-Path $projectRoot "config" "claude" "CLAUDE.md") -Raw
+$claudeMdContent = Get-Content (Join-Path (Join-Path (Join-Path $projectRoot "config") "claude") "CLAUDE.md") -Raw
+$claudeMdContent = "<!-- BEGIN AI-CROSS-MEM MANAGED BLOCK -->`n$claudeMdContent`n<!-- END AI-CROSS-MEM MANAGED BLOCK -->"
 
 if (Test-Path $claudeMd) {
     # File exists, check whether it already references AGENTS.md
@@ -197,14 +242,23 @@ if (Test-Path $claudeMd) {
     Set-Content -Path $claudeMd -Value $claudeMdContent
     Write-Success "CLAUDE.md created: $claudeMd"
 }
+}
 
 # 8. Handle the Windsurf AGENTS.md (if applicable)
-if (Test-Path $windsurfBase) {
+if ($Integration -in @("Windsurf", "Both")) {
+    New-Item -ItemType Directory -Force -Path $windsurfBase | Out-Null
+    $windsurfHookDir = Join-Path $windsurfBase "ai-cross-mem"
+    New-Item -ItemType Directory -Force -Path $windsurfHookDir | Out-Null
+    Copy-Item (Join-Path (Join-Path (Join-Path $projectRoot "hooks") "windsurf") "check_memory.py") $windsurfHookDir -Force
+    $windsurfHookConfig = Join-Path (Join-Path (Join-Path $projectRoot "hooks") "windsurf") "configure.py"
+    & $pythonCmd $windsurfHookConfig
+    if ($LASTEXITCODE -ne 0) { Write-ErrorMsg "Could not configure Windsurf hook."; exit 1 }
     Write-Info "Configuring AGENTS.md for Windsurf..."
-    $windsurfAgentsSource = Join-Path $projectRoot "config" "windsurf" "AGENTS.md"
+    $windsurfAgentsSource = Join-Path (Join-Path (Join-Path $projectRoot "config") "windsurf") "AGENTS.md"
 
     if (Test-Path $windsurfAgentsSource) {
         $windsurfAgentsContent = Get-Content $windsurfAgentsSource -Raw
+        $windsurfAgentsContent = "<!-- BEGIN AI-CROSS-MEM MANAGED BLOCK -->`n$windsurfAgentsContent`n<!-- END AI-CROSS-MEM MANAGED BLOCK -->"
 
         if (Test-Path $windsurfAgents) {
             $existing = Get-Content $windsurfAgents -Raw
@@ -226,18 +280,22 @@ if (Test-Path $windsurfBase) {
 }
 
 # 9. Copy the check_memory.py hook and register it in Claude's settings.json
-Write-Info "Installing automatic review hook..."
-$hookScript = Join-Path $projectRoot "hooks" "scripts" "check_memory.py"
-if (Test-Path $hookScript) {
-    $claudeHooksDir = Join-Path $homeDir ".claude" "skills" "ai-cross-mem" "hooks"
+if ($Integration -in @("Claude", "Both")) {
+Write-Info "Installing Claude automatic review hook..."
+$hookScript = Join-Path (Join-Path $projectRoot "hooks") "scripts"
+$hookScript = Join-Path $hookScript "check_memory.py"
+if ($Integration -in @("Claude", "Both") -and (Test-Path $hookScript)) {
+    $claudeHooksDir = Join-Path (Join-Path (Join-Path $homeDir ".claude") "skills") "ai-cross-mem"
+    $claudeHooksDir = Join-Path $claudeHooksDir "hooks"
     if (-not (Test-Path $claudeHooksDir)) {
         New-Item -ItemType Directory -Force -Path $claudeHooksDir | Out-Null
     }
     Copy-Item -Path $hookScript -Destination $claudeHooksDir -Force
     Write-Success "Hook copied to: $claudeHooksDir"
 
-    $hookConfig = Get-Content (Join-Path $projectRoot "hooks" "claude" "hooks.json") -Raw | ConvertFrom-Json
-    $claudeSettings = Join-Path $homeDir ".claude" "settings.json"
+    $hookConfigPath = Join-Path (Join-Path $projectRoot "hooks") "claude"
+    $hookConfig = Get-Content (Join-Path $hookConfigPath "hooks.json") -Raw | ConvertFrom-Json
+    $claudeSettings = Join-Path (Join-Path $homeDir ".claude") "settings.json"
     if (Test-Path $claudeSettings) {
         $settings = Get-Content $claudeSettings -Raw | ConvertFrom-Json
         $backup = "$claudeSettings.backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
@@ -265,8 +323,15 @@ if (Test-Path $hookScript) {
 } else {
     Write-Warning "Hook script not found"
 }
+}
 
 # 10. Installation summary
+& $pythonCmd $stateScript capture
+if ($LASTEXITCODE -ne 0) {
+    Write-ErrorMsg "Installation completed, but its ownership manifest could not be saved."
+    exit 1
+}
+
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green
 Write-Host "  ✓ Installation Complete" -ForegroundColor Green
@@ -275,18 +340,26 @@ Write-Host ""
 
 Write-Host "Installed files:" -ForegroundColor Cyan
 Write-Host "  → Memories: $memoryBase" -ForegroundColor White
-Write-Host "  → Claude skill: $claudeSkills" -ForegroundColor White
-Write-Host "  → Claude config: $claudeAgents" -ForegroundColor White
-Write-Host "  → Claude config: $claudeMd" -ForegroundColor White
+if ($Integration -in @("Claude", "Both")) {
+    Write-Host "  → Claude skill: $claudeSkills" -ForegroundColor White
+    Write-Host "  → Claude config: $claudeAgents" -ForegroundColor White
+    Write-Host "  → Claude config: $claudeMd" -ForegroundColor White
+}
 
-if (Test-Path $windsurfBase) {
+if ($Integration -in @("Windsurf", "Both")) {
     Write-Host "  → Windsurf skill: $windsurfSkills" -ForegroundColor White
     Write-Host "  → Windsurf config: $windsurfAgents" -ForegroundColor White
 }
 
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "  1. Open a new Claude Code session" -ForegroundColor White
+if ($Integration -eq "Windsurf") {
+    Write-Host "  1. Restart Windsurf to load the skill and Cascade hook" -ForegroundColor White
+} elseif ($Integration -eq "Both") {
+    Write-Host "  1. Open a new Claude Code session and restart Windsurf" -ForegroundColor White
+} else {
+    Write-Host "  1. Open a new Claude Code session" -ForegroundColor White
+}
 Write-Host "  2. Try: 'remember this: I installed ai-cross-mem'" -ForegroundColor White
 Write-Host "  3. In another session: 'what did we install recently?'" -ForegroundColor White
 Write-Host ""
