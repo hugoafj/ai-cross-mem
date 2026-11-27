@@ -2,11 +2,11 @@ import json
 import os
 from pathlib import Path
 import platform
-import subprocess
 import tempfile
 import unittest
 
 import uninstall
+from _support import run_checked
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,7 +63,7 @@ class UninstallerTests(unittest.TestCase):
                 install = ["bash", str(ROOT / "install.sh")]
                 uninstall = ["bash", str(ROOT / "uninstall.sh")]
 
-            subprocess.run(install, cwd=ROOT, env=env, check=True, capture_output=True, text=True)
+            run_checked(install, cwd=ROOT, env=env)
             skill = claude / "skills" / "ai-cross-mem"
             personal_file = skill / "my-notes.md"
             personal_file.write_text("keep this custom file", encoding="utf-8")
@@ -77,7 +77,7 @@ class UninstallerTests(unittest.TestCase):
             memories.parent.mkdir(parents=True)
             memories.write_text("keep this memory", encoding="utf-8")
 
-            subprocess.run(uninstall, cwd=ROOT, env=env, check=True, capture_output=True, text=True)
+            run_checked(uninstall, cwd=ROOT, env=env)
 
             self.assertFalse((skill / "scripts" / "save_memory.py").exists())
             self.assertTrue(personal_file.is_file())
@@ -166,7 +166,7 @@ class UninstallerTests(unittest.TestCase):
                 install = ["bash", str(ROOT / "install.sh")]
                 uninstall_command = ["bash", str(ROOT / "uninstall.sh")]
 
-            subprocess.run(install, cwd=ROOT, env=env, check=True, capture_output=True, text=True)
+            run_checked(install, cwd=ROOT, env=env)
             claude = home / ".claude"
             self.assertTrue((claude / "AGENTS.md").is_file())
             self.assertTrue((claude / "CLAUDE.md").is_file())
@@ -175,8 +175,8 @@ class UninstallerTests(unittest.TestCase):
             memory = memories / "must-survive.md"
             memory.write_text("keep me", encoding="utf-8")
 
-            subprocess.run(
-                uninstall_command, cwd=ROOT, env=env, check=True, capture_output=True, text=True
+            run_checked(
+                uninstall_command, cwd=ROOT, env=env
             )
 
             self.assertFalse((claude / "AGENTS.md").exists())
