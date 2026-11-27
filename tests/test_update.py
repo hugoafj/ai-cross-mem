@@ -3,13 +3,13 @@ import os
 from pathlib import Path
 import platform
 import shutil
-import subprocess
 import sys
 import tempfile
 import unittest
 from unittest import mock
 
 import update
+from _support import run_checked
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -82,7 +82,7 @@ class UpdateTests(unittest.TestCase):
                 str(source),
                 "--yes",
             ]
-            subprocess.run(command, cwd=ROOT, env=env, check=True, capture_output=True, text=True)
+            run_checked(command, cwd=ROOT, env=env)
 
             self.assertFalse(obsolete.exists())
             self.assertTrue(memory.is_file())

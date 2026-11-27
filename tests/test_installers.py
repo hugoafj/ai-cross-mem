@@ -8,6 +8,8 @@ import sys
 import tempfile
 import unittest
 
+from _support import run_checked
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -55,11 +57,10 @@ class InstallerTests(unittest.TestCase):
             env = os.environ.copy()
             env["USERPROFILE"] = home
             env["HOME"] = home
-            subprocess.run(
+            run_checked(
                 [os.environ.get("PYTHON", "python"), str(ROOT / "hooks" / "windsurf" / "configure.py")],
                 cwd=ROOT,
                 env=env,
-                check=True,
             )
             result = json.loads(config.read_text(encoding="utf-8"))
             commands = [
@@ -79,13 +80,11 @@ class InstallerTests(unittest.TestCase):
                 "agent_action_name": "post_write_code",
                 "tool_info": {"file_path": "README.md"},
             })
-            first = subprocess.run(
-                [sys.executable, hook], input=payload, text=True, capture_output=True,
-                env=env, check=True,
+            first = run_checked(
+                [sys.executable, hook], input=payload, env=env,
             )
-            second = subprocess.run(
-                [sys.executable, hook], input=payload, text=True, capture_output=True,
-                env=env, check=True,
+            second = run_checked(
+                [sys.executable, hook], input=payload, env=env,
             )
             self.assertIn("ai-cross-mem", first.stdout)
             self.assertEqual(second.stdout, "")
@@ -101,7 +100,7 @@ class InstallerTests(unittest.TestCase):
                 script_path = subprocess.check_output(
                     [r"C:\msys64\usr\bin\cygpath.exe", "-u", script_path], text=True
                 ).strip()
-            subprocess.run([str(bash), "-n", script_path], check=True)
+            run_checked([str(bash), "-n", script_path])
 
     @unittest.skipUnless(platform.system() == "Darwin", "macOS integration test")
     def test_macos_installer_installs_into_isolated_home_idempotently(self):
@@ -117,7 +116,7 @@ class InstallerTests(unittest.TestCase):
             env = os.environ.copy()
             env["HOME"] = home
             command = ["bash", str(ROOT / "install.sh")]
-            subprocess.run(command, cwd=ROOT, env=env, check=True, capture_output=True, text=True)
+            run_checked(command, cwd=ROOT, env=env)
 
             skill = claude / "skills" / "ai-cross-mem"
             self.assertTrue((home_path / "Documents" / "ai-cross-mem").is_dir())
@@ -134,7 +133,7 @@ class InstallerTests(unittest.TestCase):
             self.assertIn("PostToolUse", installed_settings["hooks"])
             self.assertTrue(list(claude.glob("AGENTS.md.backup-*")))
 
-            subprocess.run(command, cwd=ROOT, env=env, check=True, capture_output=True, text=True)
+            run_checked(command, cwd=ROOT, env=env)
             self.assertFalse((skill / "ai-cross-mem").exists())
             settings_after_second_run = json.loads(settings.read_text(encoding="utf-8"))
             hook_commands = [
@@ -163,7 +162,7 @@ class InstallerTests(unittest.TestCase):
                 "-File",
                 str(ROOT / "install.ps1"),
             ]
-            subprocess.run(command, cwd=ROOT, env=env, check=True, capture_output=True, text=True)
+            run_checked(command, cwd=ROOT, env=env)
             claude = Path(home) / ".claude"
             skill = claude / "skills" / "ai-cross-mem"
             self.assertTrue((skill / "scripts" / "save_memory.py").is_file())
@@ -173,7 +172,7 @@ class InstallerTests(unittest.TestCase):
                 (Path(env["LOCALAPPDATA"]) / "ai-cross-mem" / "install-manifest.json").is_file()
             )
 
-            subprocess.run(command, cwd=ROOT, env=env, check=True, capture_output=True, text=True)
+            run_checked(command, cwd=ROOT, env=env)
             self.assertFalse((skill / "ai-cross-mem").exists())
             self.assertIn("ai-cross-mem", (claude / "AGENTS.md").read_text(encoding="utf-8"))
 
@@ -193,12 +192,12 @@ class InstallerTests(unittest.TestCase):
                 "ai-cross-mem" / "scripts" / "__pycache__"
             )
             stale_cache.mkdir(parents=True)
-            subprocess.run(
+            run_checked(
                 [
                     powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
                     str(ROOT / "install.ps1"), "-Integration", "Windsurf",
                 ],
-                cwd=ROOT, env=env, check=True, capture_output=True, text=True,
+                cwd=ROOT, env=env,
             )
             windsurf = Path(home) / ".codeium" / "windsurf"
             self.assertTrue(
