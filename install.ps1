@@ -25,10 +25,10 @@ param(
 )
 
 # Output colors
-function Write-Success { param($msg) Write-Host "✓ $msg" -ForegroundColor Green }
-function Write-Info { param($msg) Write-Host "→ $msg" -ForegroundColor Cyan }
-function Write-Warning { param($msg) Write-Host "⚠ $msg" -ForegroundColor Yellow }
-function Write-ErrorMsg { param($msg) Write-Host "✗ $msg" -ForegroundColor Red }
+function Write-Success { param($msg) Write-Host "[OK] $msg" -ForegroundColor Green }
+function Write-Info { param($msg) Write-Host "-> $msg" -ForegroundColor Cyan }
+function Write-Warning { param($msg) Write-Host "[!] $msg" -ForegroundColor Yellow }
+function Write-ErrorMsg { param($msg) Write-Host "[X] $msg" -ForegroundColor Red }
 function Copy-SkillTree {
     param([string]$Source, [string]$Destination)
     Get-ChildItem -Path $Source -Recurse -File |
@@ -334,21 +334,21 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green
-Write-Host "  ✓ Installation Complete" -ForegroundColor Green
+Write-Host "  [OK] Installation Complete" -ForegroundColor Green
 Write-Host "============================================" -ForegroundColor Green
 Write-Host ""
 
 Write-Host "Installed files:" -ForegroundColor Cyan
-Write-Host "  → Memories: $memoryBase" -ForegroundColor White
+Write-Host "  -> Memories: $memoryBase" -ForegroundColor White
 if ($Integration -in @("Claude", "Both")) {
-    Write-Host "  → Claude skill: $claudeSkills" -ForegroundColor White
-    Write-Host "  → Claude config: $claudeAgents" -ForegroundColor White
-    Write-Host "  → Claude config: $claudeMd" -ForegroundColor White
+    Write-Host "  -> Claude skill: $claudeSkills" -ForegroundColor White
+    Write-Host "  -> Claude config: $claudeAgents" -ForegroundColor White
+    Write-Host "  -> Claude config: $claudeMd" -ForegroundColor White
 }
 
 if ($Integration -in @("Windsurf", "Both")) {
-    Write-Host "  → Windsurf skill: $windsurfSkills" -ForegroundColor White
-    Write-Host "  → Windsurf config: $windsurfAgents" -ForegroundColor White
+    Write-Host "  -> Windsurf skill: $windsurfSkills" -ForegroundColor White
+    Write-Host "  -> Windsurf config: $windsurfAgents" -ForegroundColor White
 }
 
 Write-Host ""
